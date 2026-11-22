@@ -1,0 +1,1271 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KINO VR · Home 首页化 UI 交互原型（离线验证）</title>
+<style>
+:root{
+  --bg:#0b0c0e; --surface:#191b1f; --raised:#24272c; --line:#33363b;
+  --text:#f5f6f8; --muted:#8e929a; --accent:#ff7a18; --danger:#ff4d4f;
+  --ink:#111214;
+  --ok:#8ce2b0; --warn:#ffd39b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#08090b;color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif}
+button,input,select{font-family:inherit}
+.app{max-width:1500px;margin:0 auto;padding:18px 20px 40px}
+.workspace-head{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:14px}
+.workspace-head h1{font-size:19px;margin:0 0 4px;letter-spacing:.3px}
+.workspace-head p{margin:0;color:var(--muted);font-size:12px;line-height:1.6}
+.toolbar{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:flex;background:#0c1935;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{background:transparent;border:0;color:var(--muted);padding:8px 11px;font-size:12px;cursor:pointer;white-space:nowrap}
+.seg button.on{background:var(--raised);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.seg button:hover{color:var(--text)}
+.tbtn{background:#101d3b;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px 12px;font-size:12px;cursor:pointer}
+.tbtn:hover{border-color:var(--accent)}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:16px;align-items:start}
+@media(max-width:1180px){.workspace{grid-template-columns:1fr}}
+.stage{background:#070e20;border:1px solid #1b2c50;border-radius:14px;padding:14px}
+.stage-inner{position:relative;width:100%;display:flex;justify-content:center}
+.device{position:relative;width:960px;height:540px;flex:none;transform-origin:top center;
+  border:7px solid #111c33;border-radius:20px;overflow:hidden;
+  box-shadow:0 24px 60px rgba(0,0,0,.65),inset 0 0 0 1px #2c406b}
+.stars{background-color:var(--bg);
+  background-image:
+    radial-gradient(1px 1px at 8% 18%,#a9c8ff 99%,transparent),
+    radial-gradient(1px 1px at 22% 72%,#7fa9e8 99%,transparent),
+    radial-gradient(1px 1px at 36% 32%,#c8dcff 99%,transparent),
+    radial-gradient(1px 1px at 52% 84%,#7fa9e8 99%,transparent),
+    radial-gradient(1px 1px at 67% 22%,#b9d2ff 99%,transparent),
+    radial-gradient(1px 1px at 81% 61%,#7fa9e8 99%,transparent),
+    radial-gradient(1px 1px at 93% 38%,#c8dcff 99%,transparent),
+    radial-gradient(2px 2px at 45% 55%,#38517d 99%,transparent),
+    linear-gradient(160deg,#08142e 0%,#050c1d 55%,#0a1730 100%);
+  background-size:340px 250px,340px 250px,340px 250px,340px 250px,340px 250px,340px 250px,340px 250px,340px 250px,100% 100%}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;padding:2px 4px;overflow:hidden}
+.screen.hidden{display:none}
+.home-head{display:flex;align-items:center;gap:10px;flex:none}
+.home-head .title{font-size:14px;font-weight:700;white-space:nowrap}
+.tabs{display:flex;gap:6px;flex:1;min-width:0}
+.tab{flex:1;min-width:0;height:30px;border-radius:10px;border:1px solid #547499c9;background:rgba(12,25,53,.86);
+  color:var(--text);font-size:12px;cursor:pointer;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab.on{background:rgba(27,43,86,.9);box-shadow:inset 0 0 0 2px var(--accent);color:var(--accent);font-weight:700}
+.tab:hover{filter:brightness(1.15)}
+.content{flex:1;min-height:0;margin-top:4px;position:relative}
+.page{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding-right:4px}
+.page::-webkit-scrollbar{width:6px}.page::-webkit-scrollbar-thumb{background:#2b406e;border-radius:6px}
+.page-title{font-size:15px;font-weight:700}
+.page-sub{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5}
+.scan-status{font-size:12px;color:var(--muted);margin-top:4px}
+.card{background:rgba(12,25,53,.82);border:1px solid #547499c9;border-radius:10px;
+  padding:10px 14px;margin-top:6px;cursor:pointer;transition:background .12s,border-color .12s}
+.card:hover{background:rgba(27,43,86,.7)}
+.card.focus{background:rgba(27,43,86,.92);box-shadow:inset 0 0 0 2px var(--accent);border-color:var(--accent)}
+.card .row1{display:flex;align-items:center;gap:8px}
+.card .t{font-size:15px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .s{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45}
+.badge{font-size:11px;font-weight:700;color:var(--accent);border:1px solid #3a6490;border-radius:20px;padding:2px 8px;white-space:nowrap}
+.badge.act{color:#c9d9ff;border-color:#3c5183}
+.divider{height:1px;background:var(--line);margin:14px 0 10px}
+.mini-label{font-size:12px;color:var(--muted)}
+.addr-row{display:flex;gap:8px;margin-top:6px;align-items:center}
+.addr-row input{flex:1;min-width:0;background:rgba(27,43,86,.85);border:1px solid #547499c9;border-radius:12px;
+  color:var(--text);font-size:14px;padding:8px 12px;outline:none}
+.addr-row input:focus{border-color:var(--accent)}
+.addr-row button{height:38px;padding:0 16px;border-radius:12px;background:var(--raised);border:1px solid #547499c9;
+  color:var(--text);font-size:12px;cursor:pointer;white-space:nowrap}
+.addr-row button:hover{border-color:var(--accent)}
+/* 片源库 */
+.pl-header{display:flex;align-items:center;gap:10px;height:42px;border-bottom:1px solid #38517d;margin-bottom:10px}
+.pl-header .back,.icon-btn{width:40px;height:38px;border-radius:10px;background:transparent;border:1px solid transparent;
+  color:var(--muted);font-size:17px;cursor:pointer;display:grid;place-items:center}
+.pl-header .back:hover,.icon-btn:hover{background:rgba(27,43,86,.7);color:var(--accent);border-color:#3a6490}
+.pl-header .pl-title{font-size:18px;font-weight:700}
+.pl-header .count{font-size:12px;color:var(--muted)}
+.pl-header .spacer{flex:1}
+.pl-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.vrow{display:flex;gap:10px;align-items:center;background:rgba(12,25,53,.82);border:1px solid #547499c9;
+  border-radius:10px;padding:8px;cursor:pointer}
+.vrow:hover{background:rgba(27,43,86,.82);border-color:var(--accent)}
+.vrow.focus{box-shadow:inset 0 0 0 2px var(--accent);background:rgba(27,43,86,.9)}
+.cover{width:86px;height:50px;border-radius:6px;flex:none;display:grid;place-items:center;
+  font-size:10px;color:#eaf4ff;text-align:center;line-height:1.25;overflow:hidden;font-weight:700}
+.vrow .meta{min-width:0;flex:1}
+.vrow .n{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vrow .d{font-size:10px;color:var(--muted);margin-top:4px}
+.bar{height:3px;background:#22345c;border-radius:3px;margin-top:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.pl-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.tile{background:rgba(12,25,53,.82);border:1px solid #547499c9;border-radius:10px;padding:5px;cursor:pointer}
+.tile:hover{border-color:var(--accent)}
+.tile .cover{width:100%;height:82px}
+.tile .n{font-size:11px;margin:6px 2px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{text-align:center;color:var(--muted);font-size:15px;padding:60px 20px;line-height:2}
+/* 播放页 */
+.player{position:absolute;inset:0;overflow:hidden}
+.world{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:14px}
+.lens{width:340px;height:340px;border-radius:50%;overflow:hidden;position:relative;
+  box-shadow:inset 0 0 60px 20px rgba(0,0,0,.75),0 0 0 3px #0b1732;background:#0a1428}
+.lens::after{content:"";position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,transparent 45%,rgba(0,0,0,.6) 100%)}
+.pano{position:absolute;inset:0;
+  background:linear-gradient(180deg,#12294f 0%,#1e4a78 38%,#d98b6a 62%,#2a3350 63%,#131c33 100%)}
+.pano::before{content:"";position:absolute;inset:0;opacity:.22;
+  background-image:linear-gradient(rgba(255,255,255,.35) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.35) 1px,transparent 1px);
+  background-size:34px 34px}
+.pano::after{content:"";position:absolute;left:-10%;right:-10%;bottom:38%;height:26%;
+  background:#151d31;clip-path:polygon(0 100%,12% 52%,24% 78%,38% 30%,52% 70%,66% 38%,80% 72%,92% 46%,100% 100%);opacity:.9}
+.flat{width:640px;height:360px;border-radius:4px;overflow:hidden;position:relative;
+  box-shadow:0 0 0 8px rgba(20,32,60,.9),0 0 70px rgba(135,217,255,.18)}
+.flat .pano{inset:0}
+.screen-plane{width:760px;height:428px;perspective:1200px;position:relative}
+.screen-plane .silver{position:absolute;inset:0;border:6px solid #2a3a5e;border-radius:6px;overflow:hidden;
+  box-shadow:0 0 0 3px #0a1226,0 30px 80px rgba(0,0,0,.8),inset 0 0 40px rgba(135,217,255,.12);
+  transform:perspective(1200px) rotateX(1deg)}
+.silver-in{position:absolute;inset:0;background:linear-gradient(160deg,#12325c,#0b1d3c 55%,#1a3b63);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+.desktop{position:absolute;inset:0;background:linear-gradient(135deg,#0f5a8c,#0a2b57 60%,#152c52)}
+.win{position:absolute;background:rgba(240,246,255,.94);border-radius:5px;box-shadow:0 12px 30px rgba(0,0,0,.4)}
+.win.a{left:12%;top:18%;width:44%;height:52%}.win.b{left:48%;top:34%;width:38%;height:40%;background:rgba(210,228,250,.92)}
+.taskbar{position:absolute;left:0;right:0;bottom:0;height:26px;background:rgba(8,18,38,.82)}
+.flipinfo{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted)}
+.pbar{position:absolute;left:0;right:0;padding:4px 10px;display:flex;align-items:center;gap:6px;
+  background:linear-gradient(180deg,rgba(7,17,38,.92),rgba(7,17,38,.55));z-index:5}
+.pbar.top{top:0}.pbar.bottom{bottom:0}
+.pbar .logo{width:120px;font-size:13px;font-weight:800;color:var(--accent);letter-spacing:1px}
+.pbar .headings{flex:1;min-width:0;text-align:center}
+.pbar .vt{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbar .vd{font-size:9px;color:var(--muted);margin-top:2px}
+.pbar .acts{display:flex;gap:4px}
+.pbar .acts .icon-btn{width:38px;height:38px;font-size:15px}
+.pbar.bottom .prow{display:flex;align-items:center;gap:8px;flex:1}
+.pbar.bottom .icon-btn{width:38px;height:38px}
+.seek{flex:1;height:4px;background:#2a3b64;border-radius:4px;position:relative;cursor:pointer}
+.seek i{display:block;height:100%;background:var(--accent);border-radius:4px;position:relative}
+.seek i::after{content:"";position:absolute;right:-5px;top:-4px;width:12px;height:12px;border-radius:50%;background:var(--accent)}
+.times{font-size:9px;color:var(--muted);min-width:88px;text-align:center}
+.tune{display:flex;gap:6px;align-items:center}
+.tgroup{display:flex;align-items:center;gap:2px;background:rgba(35,69,116,.5);border-radius:12px;padding:0 4px;height:38px}
+.tgroup b{font-size:14px;color:var(--text);cursor:pointer;width:18px;text-align:center}
+.tgroup .lab{font-size:9px;color:var(--muted);text-align:center;min-width:62px;line-height:1.2}
+.tgroup .lab em{display:block;font-style:normal;font-size:11px;color:var(--text);font-weight:700}
+/* VR 模式：world-locked 单平面菜单，每眼各画一份（960×540 虚拟银幕） */
+.vrmenu{position:absolute;inset:0;background:#0b0c0e;color:#f5f6f8;padding:22px 30px;
+  display:flex;flex-direction:column;font-size:20px;line-height:1.35}
+.vrmenu .vhead{display:flex;align-items:center;gap:16px;padding-bottom:16px;border-bottom:1px solid #33363b}
+.vrmenu .vhead .brand{font-size:22px}
+.vrmenu .vtabs{display:flex;gap:10px}
+.vrmenu .vtab{padding:10px 20px;border-radius:9px;background:#191b1f;border:1px solid #33363b;
+  color:#f5f6f8;font-size:19px;font-weight:700;cursor:pointer;white-space:nowrap}
+.vrmenu .vtab.on{background:#ff7a18;border-color:#ff7a18;color:#111214}
+.vrmenu .vtag{font-size:15px;color:#8e929a}
+.vrmenu .vbody{flex:1;min-height:0;display:flex;gap:22px;padding:18px 0}
+.vrmenu .vlist{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px;overflow:hidden}
+.vrmenu .vrow{padding:11px 16px;border-radius:9px;background:#191b1f;border:1px solid #33363b;
+  cursor:pointer;display:flex;align-items:center;gap:14px}
+.vrmenu .vrow.on{background:#ff7a18;border-color:#ff7a18;color:#111214;font-weight:700}
+.vrmenu .vrow .vsub{font-size:15px;color:#8e929a;margin-left:auto}
+.vrmenu .vrow.on .vsub{color:#4a2a08}
+.vrmenu .vside{width:270px;flex:none;background:#191b1f;border:1px solid #33363b;border-radius:10px;padding:16px}
+.vrmenu .vside h3{margin:0 0 12px;font-size:19px}
+.vrmenu .vside p{font-size:16px;color:#8e929a;margin:6px 0}
+.vrmenu .vfoot{border-top:1px solid #33363b;padding-top:12px;font-size:16px;color:#8e929a}
+.vrmenu .vstage{flex:1;display:flex;flex-direction:column;min-height:0}
+.vrmenu .vvideo{flex:1;border-radius:10px;border:1px solid #33363b;background:#12151b;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:30px;color:#d6d9de}
+.vrmenu .vvideo small{font-size:17px;color:#8e929a;font-weight:400;margin-top:10px}
+.vrmenu .vctrl{display:flex;align-items:center;gap:14px;padding:14px 0 0}
+.vrmenu .vctrl button{padding:8px 16px;font-size:19px;border-radius:8px;background:#191b1f;
+  border:1px solid #33363b;color:#f5f6f8;cursor:pointer}
+.vrmenu .vseekbar{flex:1;height:8px;background:#33363b;border-radius:6px;position:relative}
+.vrmenu .vseekbar i{display:block;height:100%;background:#ff7a18;border-radius:6px}
+.vrmenu .vtime{font-size:17px;color:#8e929a;min-width:140px}
+.vrmenu .vrow .vtab{padding:4px 12px;font-size:17px}
+/* 覆盖层 / 对话框 */
+.overlay{position:absolute;inset:0;background:rgba(4,9,22,.82);z-index:20;display:flex;
+  align-items:center;justify-content:center;padding:26px}
+.panel{background:rgba(13,26,54,.98);border:1px solid var(--line);border-radius:18px;
+  width:min(760px,94%);max-height:92%;overflow:auto;padding:18px 22px;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.panel h2{font-size:19px;margin:0 0 12px}
+.panel .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pcard{background:rgba(12,25,53,.9);border:1px solid #344b78;border-radius:18px;padding:14px 16px;margin-bottom:8px}
+.pcard h3{font-size:15px;margin:0 0 3px}
+.pcard .sub{font-size:10px;color:var(--muted);line-height:1.5;margin-bottom:8px}
+.actrow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.actrow .lbl{flex:1;font-size:12px}
+.sbtn{min-width:156px;height:36px;border-radius:10px;background:rgba(27,43,86,.9);border:1px solid #547499c9;
+  color:var(--text);font-size:12px;cursor:pointer;padding:0 10px}
+.sbtn:hover{border-color:var(--accent)}
+.choice{display:block;width:100%;text-align:left;padding:10px 14px;margin:5px 0;border-radius:10px;
+  background:rgba(12,25,53,.9);border:1px solid #344b78;color:var(--text);font-size:13px;cursor:pointer}
+.choice:hover{border-color:var(--accent)}
+.choice.on{border-color:var(--accent);color:var(--accent);font-weight:700}
+.panel-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.panel-actions button{padding:9px 16px;border-radius:10px;border:1px solid #547499c9;background:var(--raised);
+  color:var(--text);font-size:12px;cursor:pointer}
+.panel-actions button.primary{border-color:var(--accent);color:var(--accent)}
+.pin-num{font-size:44px;font-weight:800;letter-spacing:.35em;color:var(--accent);text-align:center;padding:18px 0}
+.pin-hint{font-size:12px;color:var(--muted);line-height:1.7}
+.vr-list{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vr-eye-list{border:2px solid #34507f;border-radius:50%/8%;padding:14px 16px;background:rgba(9,20,42,.9);min-height:180px}
+.vr-eye-list .li{padding:7px 10px;border-radius:8px;font-size:12px;color:var(--muted)}
+.vr-eye-list .li.on{background:rgba(27,43,86,.95);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+/* 问题标注 */
+.issue{display:inline-block;font-size:9px;line-height:1;padding:3px 5px;border-radius:4px;margin-left:6px;
+  border:1px solid #a9703a;color:var(--warn);background:rgba(120,72,20,.22);cursor:help;vertical-align:middle;white-space:nowrap}
+.issue.fixed{border-color:#39795a;color:var(--ok);background:rgba(30,100,66,.2)}
+body:not(.show-issues) .issue{display:none}
+/* VR 双目叠层 */
+.vr-overlay{position:absolute;inset:0;display:none;background:#02050c;z-index:30;
+  align-items:center;justify-content:center;gap:8px}
+.vr-overlay.on{display:flex}
+.eye{width:470px;height:520px;position:relative;overflow:hidden;flex:none;
+  clip-path:ellipse(47% 49% at 50% 50%);background:#030711;
+  box-shadow:inset 0 0 90px 40px rgba(0,0,0,.9)}
+.eye .screen-view{position:absolute;top:0;left:0;width:960px;height:540px;transform-origin:top left}
+.vr-overlay.legacy .eye .screen-view{transform:scale(.98)}
+.vr-overlay.legacy .eye.right .screen-view{transform:scale(.98) translateX(-480px)}
+.vr-overlay.target .eye .screen-view{top:50%;left:50%;transform-origin:center;
+  transform:translate(-50%,-50%) scale(.46);
+  border-radius:14px;box-shadow:0 0 0 2px rgba(135,217,255,.25),0 20px 60px rgba(0,0,0,.8)}
+.vr-overlay.target .eye::before{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:radial-gradient(circle at 50% 50%,transparent 55%,rgba(0,0,0,.7) 100%)}
+.crosshair{position:absolute;z-index:5;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;
+  border:2px solid var(--accent);border-radius:50%;opacity:0}
+.vr-overlay.target .crosshair{opacity:.9}
+.vr-badge{position:absolute;z-index:6;bottom:8px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted);
+  background:rgba(3,8,20,.86);padding:6px 10px;line-height:1.5}
+/* 虚拟手柄 */
+.gamepad{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:12px;flex-wrap:wrap}
+.pad{display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,30px);gap:3px}
+.pad button{border:1px solid #3a5384;background:#101d3b;color:var(--text);border-radius:7px;cursor:pointer;font-size:13px}
+.pad button:hover{border-color:var(--accent);color:var(--accent)}
+.pad .u{grid-area:1/2}.pad .l{grid-area:2/1}.pad .c{grid-area:2/2;color:var(--accent);font-size:11px}
+.pad .r{grid-area:2/3}.pad .d{grid-area:3/2}
+.pad-note{font-size:11px;color:var(--muted);line-height:1.8}
+kbd{background:#182a4d;border:1px solid #3a5384;border-radius:4px;padding:1px 5px;font-size:10px;color:var(--text)}
+/* 右栏 */
+.inspector{display:flex;flex-direction:column;gap:12px}
+.ibox{background:#08122a;border:1px solid #1e3157;border-radius:12px;padding:12px 14px}
+.ibox h3{margin:0 0 10px;font-size:12px;color:var(--accent);letter-spacing:.6px;font-weight:700}
+.state-grid{display:grid;grid-template-columns:82px 1fr;gap:5px 8px;font-size:11px}
+.state-grid .k{color:var(--muted)}
+.state-grid .v{font-family:Consolas,"SF Mono",monospace;color:var(--text);word-break:break-all}
+.log{height:210px;overflow:auto;font-size:10.5px;line-height:1.55;font-family:Consolas,"SF Mono",monospace}
+.log::-webkit-scrollbar{width:5px}.log::-webkit-scrollbar-thumb{background:#2b406e}
+.log .e{padding:4px 0;border-bottom:1px dashed #1b2b4c;color:var(--muted)}
+.log .e b{color:var(--text);font-weight:600}
+.log .e code{color:var(--accent);font-size:10px}
+.checks{list-style:none;margin:0;padding:0;font-size:11.5px}
+.checks li{display:flex;gap:8px;padding:4px 0;color:var(--muted);line-height:1.5}
+.checks li .box{width:15px;height:15px;flex:none;border:1px solid #3a5384;border-radius:4px;text-align:center;line-height:13px;font-size:10px}
+.checks li.done{color:var(--text)}
+.checks li.done .box{background:#1c6b47;border-color:#2a9b67;color:#fff}
+.notes{font-size:11px;color:var(--muted);line-height:1.75}
+.notes b{color:var(--text)}
+.legend-dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.toast{position:absolute;z-index:40;left:50%;bottom:56px;transform:translateX(-50%);
+  background:rgba(27,43,86,.98);border:1px solid var(--line);border-radius:14px;
+  padding:10px 18px;font-size:12px;color:var(--text);box-shadow:0 12px 30px rgba(0,0,0,.6);
+  max-width:80%;text-align:center;pointer-events:none;opacity:0;transition:opacity .18s}
+.toast.on{opacity:1}
+.tag{font-size:9px;color:var(--muted);border:1px solid #2c4370;border-radius:4px;padding:1px 5px;margin-left:6px}
+.foot{margin-top:14px;color:var(--muted);font-size:11px;line-height:1.8}
+/* ── KINO VR 黑橙拼色：统一覆盖旧蓝紫 / 青蓝描边 ──
+   只改 UI 外壳；.pano/.desktop/.win 等"演示画面内容"保持原色，避免把素材误当主题。
+   橙仅用于焦点态、主操作、品牌块与进度指示，约 8~12% 面积。 */
+html,body{background:#08090b}
+.page-sub,.card .s,.scan-status,.mini-label,.checks li,.log .e,.key-hint,.status-line{color:var(--muted)}
+.stage,.ibox,.log,.checks,.seg,.tbtn,.addr-row input,.addr-row button,.pcard,.choice,
+.tab,.card,.pin-panel,.modal,.vr-eye-list,.pbar,.panel-actions button,
+.vrow,.tile,.tgroup,kbd,.pad button,.badge.act,.sbtn,.panel,.toast{
+  background:rgba(25,27,31,.94);border-color:#33363b;color:var(--text)}
+.stars{background-image:none;background-color:#0b0c0e}
+.screen{background:radial-gradient(85% 70% at 50% -12%,rgba(255,122,24,.07),transparent 72%),#0b0c0e}
+.device{border-color:#1b1d21;box-shadow:0 24px 60px rgba(0,0,0,.65),inset 0 0 0 1px #33363b}
+.pbar{background:rgba(11,12,14,.92)}
+.panel{background:rgba(17,19,22,.98)}
+.pl-header{border-bottom-color:#33363b}
+.icon-btn:hover,.pl-header .back:hover,.addr-row button:hover,.card:hover{background:rgba(36,39,44,.9)}
+.addr-row input:focus,.card:hover,.tab:hover{border-color:var(--accent)}
+.badge{border-color:#3f4247}
+.divider{background:var(--line)}
+.page::-webkit-scrollbar-thumb,.log::-webkit-scrollbar-thumb{background:#33363b}
+.tag{border-color:#33363b}
+.vr-overlay.target .eye .screen-view{box-shadow:0 0 0 2px rgba(255,255,255,.18),0 20px 60px rgba(0,0,0,.8)}
+.flat{box-shadow:0 0 0 8px rgba(28,30,34,.9),0 0 70px rgba(255,255,255,.1)}
+.issue{border-color:#5a5f66;color:#d6d9de;background:rgba(60,64,70,.25)}
+/* 拼色 wordmark：KINO 黑块 + VR 橙块，硬边切分、无渐变无阴影 */
+.brand{display:inline-flex;align-items:stretch;flex:none;border-radius:7px;line-height:1;
+  font-size:12px;font-weight:800;letter-spacing:1.4px;white-space:nowrap}
+.brand b{display:grid;place-items:center;padding:6px 9px;border-radius:7px 0 0 7px;
+  background:#191b1f;border:1px solid #3a3d42;border-right:0;color:#f5f6f8}
+.brand i{display:grid;place-items:center;padding:6px 9px;border-radius:0 7px 7px 0;
+  background:var(--accent);color:var(--ink);font-style:normal}
+.pbar .logo{width:auto}
+.pbar .brand{font-size:10px}
+.pbar .brand b,.pbar .brand i{padding:5px 8px}
+/* 焦点态：青蓝描边 → 橙实心块，头显内 D-pad 焦点更可辨 */
+.tab.on,.card.focus,.seg button.on,.vrow.focus,.choice.on,.vr-eye-list .li.on{
+  background:var(--accent);border-color:var(--accent);color:var(--ink);
+  box-shadow:none;font-weight:800}
+.card.focus .t,.card.focus .s,.card.focus .badge,.vrow.focus .n,.vrow.focus .d{color:var(--ink)}
+.card.focus .badge,.vrow.focus .badge{border-color:rgba(17,18,20,.55)}
+.panel-actions button.primary{background:var(--accent);border-color:var(--accent);color:var(--ink);font-weight:800}
+.brand-demo{display:flex;gap:14px;align-items:flex-start}
+.bd-icon{width:72px;height:72px;flex:none;border-radius:16px;overflow:hidden;border:1px solid #33363b}
+.bd-icon svg{display:block;width:100%;height:100%}
+.brand-demo p{margin:10px 0 0;font-size:11px;color:var(--muted);line-height:1.6}
+.bd-swatches{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;font-size:10px;color:var(--muted)}
+.bd-swatches span{display:inline-flex;align-items:center;gap:5px}
+.bd-swatches i{width:12px;height:12px;border-radius:3px;border:1px solid #33363b}
+.cover{filter:saturate(.7) brightness(.9)}
+</style>
+</head>
+<body class="show-issues">
+<div class="app">
+  <div class="workspace-head">
+    <div>
+      <h1>KINO VR · Home 首页化 UI 交互原型</h1>
+      <p>版本 <b>4.8 · 黑橙拼色 / KINO VR / VR 菜单已落地</b>· 分支 <code>feature/ui-refine</code> · 单文件离线原型，无外部依赖。<br>
+         模拟 <b>HomeActivity（片源库 / 连接 / 设置）</b> 与 <b>MainActivity（播放页）</b> 的两级导航、HomeController 状态机、语义输入与渲染层替换。<br>
+         <code>#vrmode</code> = APK 4.8 已实现的 VR 菜单：首页最右按钮进入 → world-locked 银幕上的菜单 → 选片后同一平面切成视频 + 下沿控制条。</p>
+    </div>
+    <div class="toolbar">
+      <div class="seg" id="langSeg">
+        <button data-act="lang" data-v="zh" class="on">中文</button>
+        <button data-act="lang" data-v="en">English</button>
+      </div>
+      <div class="seg" id="viewSeg">
+        <button data-act="view" data-v="off" class="on">2D 手机</button>
+        <button data-act="view" data-v="legacy">头显·现状</button>
+        <button data-act="view" data-v="target">头显·H4 目标</button>
+      </div>
+      <button class="tbtn" data-act="issues">问题标注：开</button>
+      <button class="tbtn" data-act="reset">重置原型</button>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <section class="stage">
+      <div class="stage-inner" id="stageInner">
+        <div class="device" id="device">
+          <div id="screen"></div>
+          <div class="vr-overlay" id="vrOverlay">
+            <div class="eye left"><div class="screen-view"></div><div class="crosshair"></div></div>
+            <div class="eye right"><div class="screen-view"></div><div class="crosshair"></div></div>
+            <div class="vr-badge" id="vrBadge"></div>
+          </div>
+          <div class="toast" id="toast"></div>
+        </div>
+      </div>
+      <div class="gamepad">
+        <div class="pad">
+          <button class="u" data-act="key" data-v="UP" title="↑">↑</button>
+          <button class="l" data-act="key" data-v="LEFT" title="←">←</button>
+          <button class="c" data-act="key" data-v="CONFIRM" title="确认 / A">OK</button>
+          <button class="r" data-act="key" data-v="RIGHT" title="→">→</button>
+          <button class="d" data-act="key" data-v="DOWN" title="↓">↓</button>
+        </div>
+        <button class="tbtn" data-act="key" data-v="BACK">返回 / Esc</button>
+        <div class="pad-note">
+          键盘等价：<kbd>←</kbd><kbd>→</kbd> 切板块 · <kbd>↑</kbd><kbd>↓</kbd> 移动焦点 · <kbd>Enter</kbd> 确认 · <kbd>Esc</kbd> 返回<br>
+          这里模拟 <b>GamepadInput → HomeInput.Navigate / Confirm / Back</b> 的同一条语义分发链。
+        </div>
+      </div>
+    </section>
+
+    <aside class="inspector">
+      <div class="ibox">
+        <h3>HomeController · 状态机快照</h3>
+        <div class="state-grid" id="stateGrid"></div>
+      </div>
+      <div class="ibox">
+        <h3>交互事件流（HomeInput → HomeEffect）</h3>
+        <div class="log" id="log"></div>
+      </div>
+      <div class="ibox">
+        <h3>验证清单 <span id="checkCount" style="float:right;color:var(--muted);font-weight:400"></span></h3>
+        <ul class="checks" id="checks"></ul>
+      </div>
+      <div class="ibox" style="order:-1">
+        <h3>品牌资产 · KINO VR（预览）</h3>
+        <div class="brand-demo">
+          <div class="bd-icon"><svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 0H54V108H0Z" fill="#191b1f"/>
+            <path d="M54 0H108V108H54Z" fill="#ff7a18"/>
+            <path d="M31,36 H40 A9,9 0 0 1 49,45 V63 A9,9 0 0 1 40,72 H31 A9,9 0 0 1 22,63 V45 A9,9 0 0 1 31,36 Z" fill="#f5f6f8"/>
+            <path d="M68,36 H77 A9,9 0 0 1 86,45 V63 A9,9 0 0 1 77,72 H68 A9,9 0 0 1 59,63 V45 A9,9 0 0 1 68,36 Z" fill="#111214"/>
+          </svg></div>
+          <div>
+            <span class="brand"><b>KINO</b><i>VR</i></span>
+            <p>图标：左右对半拼色 + 双目视口；文字标：两段硬切、无渐变无阴影。旧 AstriaVR 星轨图标与青蓝主题已弃用。</p>
+          </div>
+        </div>
+        <div class="bd-swatches">
+          <span><i style="background:#0b0c0e"></i>底 0B0C0E</span>
+          <span><i style="background:#191b1f"></i>卡片 191B1F</span>
+          <span><i style="background:#ff7a18"></i>强调 FF7A18</span>
+          <span><i style="background:#ff4d4f"></i>危险 FF4D4F</span>
+        </div>
+      </div>
+      <div class="ibox">
+        <h3>图例与已知问题</h3>
+        <div class="notes" id="notes"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+/* ───────────────────────── 文案（摘自 AppText.java） ───────────────────────── */
+const I = {
+  homeTitle:{zh:'KINO VR',en:'KINO VR'},
+  tabLibrary:{zh:'片源库',en:'Library'}, tabConnect:{zh:'连接',en:'Connect'}, tabSettings:{zh:'设置',en:'Settings'},
+  connectTitle:{zh:'连接设备',en:'Connections'},
+  connectHint:{zh:'自动发现局域网片源设备与 Sunshine 串流主机；列表里可直接重新配对，长按主机卡片也可以。',en:'Auto-discover LAN sources and Sunshine hosts. Pair again from the list, or long-press a host card.'},
+  scanning:{zh:'正在扫描局域网…',en:'Scanning LAN…'},
+  noService:{zh:'暂未发现设备，请确认 PC 软件已启动，或手动输入地址',en:'No device found. Start the PC app, or enter an address manually.'},
+  foundDevice:{zh:'发现 {0} 台设备',en:'Found {0} devices'},
+  foundHost:{zh:'发现 {0} 台串流主机',en:'Found {0} streaming hosts'},
+  videos:{zh:'{0} 个片源',en:'{0} videos'},
+  tapStream:{zh:'点击连接大屏串流',en:'Tap for big-screen stream'},
+  streaming:{zh:'正在串流',en:'Streaming'},
+  badgeDevice:{zh:'片源设备',en:'Source'}, badgeHost:{zh:'串流',en:'Stream'}, badgeAct:{zh:'操作',en:'Action'},
+  repair:{zh:'重新配对这台主机',en:'Pair this host again'},
+  rescan:{zh:'重新扫描局域网',en:'Rescan LAN'}, rescanHint:{zh:'重新发现片源设备与串流主机',en:'Rediscover sources and stream hosts'},
+  addLocal:{zh:'添加本地视频',en:'Add local videos'}, addLocalHint:{zh:'从手机存储选择视频并加入片源库',en:'Pick videos from phone storage'},
+  manual:{zh:'或手动输入地址',en:'Or enter an address manually'},
+  manualHint:{zh:'填写局域网 PC / NAS 上视频的 HTTP(S) 地址，边下边播，可拖进度。',en:'Enter the HTTP(S) URL of a video on your LAN PC or NAS. Streams and seeks over HTTP.'},
+  urlHint:{zh:'视频 http(s) 地址',en:'Video http(s) URL'}, ipHint:{zh:'主机 IP，例如 192.168.31.254',en:'Host IP, e.g. 192.168.31.254'},
+  open:{zh:'打开',en:'Open'}, probe:{zh:'探测',en:'Probe'},
+  invalid:{zh:'地址无效，请以 http:// 或 https:// 开头',en:'Invalid address. It must start with http:// or https://'},
+  connecting:{zh:'正在连接 {0}，读取片源列表…',en:'Connecting to {0}, loading videos…'},
+  imported:{zh:'已从 {0} 同步 {1} 个片源到播放列表',en:'Synced {1} videos from {0} into the playlist'},
+  settings:{zh:'设置',en:'Settings'},
+  lang:{zh:'界面语言',en:'Interface language'},
+  langHint:{zh:'切换后重建首页；不影响播放页的观看参数与播放进度',en:'Rebuilds Home; viewing settings and playback are unaffected'},
+  watch:{zh:'观看参数',en:'Viewing settings'},
+  watchHint:{zh:'IPD / 投影 / 畸变 / 亮度 / 银幕大小与方向，在播放页内边看边调',en:'IPD, projection, distortion, brightness and screen size are adjusted inside the player'},
+  about:{zh:'关于',en:'About'},
+  aboutHint:{zh:'PC 片源服务需管理员身份运行；大屏串流需要 PC 端 Sunshine',en:'Run the PC source service as administrator; big-screen streaming needs Sunshine on the PC'},
+  empty:{zh:'还没有片源',en:'No videos yet'},
+  emptyHint:{zh:'点「添加本地视频」，或到「连接」板块同步 PC 上的片源',en:'Add local videos, or sync sources from a PC in Connect'},
+  playlist:{zh:'播放列表',en:'Playlist'},
+  pinTitle:{zh:'首次连接 · 配对',en:'First connection · Pair'},
+  pinHint:{zh:'在电脑的 Sunshine 管理页打开 PIN Pairing，选中本设备并输入下面的 4 位配对码。输入后会自动继续，无需再点。',en:'Open PIN Pairing in Sunshine on the PC, select this device and enter the 4-digit code below. It continues automatically.'},
+  pinWait:{zh:'等待电脑确认…',en:'Waiting for the PC...'},
+  pinOk:{zh:'配对成功，正在连接',en:'Paired, connecting...'},
+  pinFail:{zh:'配对未完成',en:'Pairing failed'},
+  cancel:{zh:'取消',en:'Cancel'},
+  viewingMode:{zh:'观看模式',en:'Viewing mode'},
+  dual:{zh:'3D 双镜头 · VR',en:'3D dual lens · VR'}, single:{zh:'手机直看单镜头 · VR',en:'Phone single lens · VR'},
+  standard:{zh:'普通视频',en:'2D video'}, bigScreen:{zh:'大屏模式',en:'Big screen mode'},
+  bigHint:{zh:'把画面贴成一块平面投影幕，转头时银幕保持不动',en:'Flat screen in headset; stays fixed as you turn your head'},
+  size:{zh:'银幕大小',en:'Screen size'}, orient:{zh:'画面方向',en:'Screen orientation'},
+  flip0:{zh:'正常',en:'Normal'}, flip1:{zh:'上下翻转',en:'Flip vertical'}, flip2:{zh:'旋转 180°',en:'Rotate 180°'},
+  picture:{zh:'画面',en:'Picture'}, aspect:{zh:'手机画面比例',en:'Phone aspect'}, shape:{zh:'手机显示投影',en:'Display shape'},
+  letterbox:{zh:'保持比例',en:'Letterbox'}, full:{zh:'铺满',en:'Fill'}, rect:{zh:'动态矩形',en:'Dynamic rectangle'}, ellipse:{zh:'椭圆',en:'Ellipse'},
+  ipd:{zh:'瞳距 cm',en:'IPD cm'}, fov:{zh:'视场角度',en:'FOV'}, speed:{zh:'倍速',en:'Speed'},
+  swap:{zh:'交换左右眼',en:'Swap eyes'}, resetDef:{zh:'恢复默认',en:'Reset defaults'}, debug:{zh:'调试模式',en:'Comfort tuning'},
+  language:{zh:'语言 / Language',en:'Language / 語言'}, resetAll:{zh:'恢复默认设置？',en:'Reset all settings?'},
+  confirm:{zh:'确认',en:'OK'}, close:{zh:'返回播放',en:'Back to player'},
+  choose:{zh:'请选择',en:'Choose'},
+  sourceProj:{zh:'片源投影',en:'Source projection'},
+  dualPlaylist:{zh:'播放页内换片（双眼同步）',en:'Switch video inside player (both eyes)'},
+  dualPlaylistHint:{zh:'复用 VrPlaylistView，不用退出播放页；首尾循环。',en:'Reuses VrPlaylistView, no exit needed; wraps at both ends.'},
+};
+const t=k=>((I[k]||{zh:k,en:k})[S.lang]);
+const tf=(k,...a)=>{let s=t(k);a.forEach((v,i)=>s=s.replace('{'+i+'}',v));return s;};
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);
+
+/* ───────────────────────── 状态 ───────────────────────── */
+const TABS=['LIBRARY','CONNECT','SETTINGS'];
+const CHECKS=[
+  ['tabs','三个一级板块可切换（点击 Tab 或 ← →）'],
+  ['focus','↑ ↓ 焦点环绕；Enter 确认与鼠标点击结果一致'],
+  ['connect','连接板块：片源设备 / 串流主机 / 操作条目分层'],
+  ['launchVideo','选中片源 → 播放页（Route: Video）'],
+  ['launchStream','选中串流主机 → 播放页（Route: Stream）+ 首次 PIN 配对'],
+  ['switchVideo','播放页内换片，不退出播放页'],
+  ['backHome','播放页返回回首页，保留板块 / 焦点 / 滚动位置'],
+  ['watchParams','观看参数留在播放页，大屏方向三态可切'],
+  ['vrLegacy','头显·现状：2D 菜单被两个透镜各看一半'],
+  ['vrTarget','头显·H4 目标：同一份 HomeState 双眼各画一份'],
+  ['lang','中英文文案切换，首页重建但状态不丢'],
+  ['issues','用「问题标注」核对上一轮总结的 UI 问题'],
+];
+function seedLibrary(){return [
+  {id:1,n:'星际穿越 · IMAX 180° 全景',en:'Interstellar · IMAX 180°',dur:'02:49:00',p:.32,tag:'3D · 180°',h:205},
+  {id:2,n:'海底世界 · 360° 全景',en:'Underwater · 360°',dur:'00:18:42',p:.71,tag:'360°',h:190},
+  {id:3,n:'演唱会现场 · 上下 TB',en:'Live Concert · Top/Bottom',dur:'01:36:20',p:0,tag:'3D · TB',h:280},
+  {id:4,n:'城市夜景 · 双鱼眼 180°',en:'City Night · 3D Fish 180°',dur:'00:12:05',p:.45,tag:'3D · Fish',h:25},
+  {id:5,n:'旅行纪录 · 普通 2D',en:'Travel Doc · 2D',dur:'00:48:10',p:0,tag:'2D',h:145},
+  {id:6,n:'测试片 · 网格校准',en:'Calibration Grid',dur:'00:02:00',p:0,tag:'2D',h:220},
+];}
+function initial(){
+  return {
+    lang:'zh', vrMode:'off', issues:true,
+    screen:'HOME', tab:'LIBRARY', focus:0, status:'', version:'4.8',
+    overlay:null, selector:null, route:null, lastInput:'—', lastEffect:'—',
+    library:seedLibrary(), gridMode:false, query:'', scroll:{LIBRARY:0,CONNECT:0,SETTINGS:0},
+    devices:[], hosts:[], scanned:false, paired:false, pin:'', manualUrl:'', manualHost:'',
+    viewingMode:0, screenFlip:0, screenFov:70, aspect:0, shape:0, ipd:6.2, fov:96, speed:1.0,
+    playing:true, pos:.32, current:1, vrListFocus:0,
+    vrTab:'LIBRARY', vrFocus:0, vrPlaying:false,
+    log:[], done:{}, toast:'', toastTimer:0, added:0,
+  };
+}
+let S=initial();
+
+/* ───────────────────────── HomeController（与 Kotlin 同语义） ───────────────────────── */
+const itemsByTab={};
+function homeItems(tab){
+  if(tab==='CONNECT'){
+    const out=[];
+    S.devices.forEach(d=>out.push({id:'device|'+d.ip,title:d.name,
+      subtitle:d.ip+':'+d.port+' · '+tf('videos',d.count),badge:t('badgeDevice'),badgeCls:'',kind:'cmd',cmd:'CONNECT_DEVICE'}));
+    S.hosts.forEach(h=>{
+      out.push({id:'host|'+h.ip,title:h.name,
+        subtitle:h.ip+':47989 · HEVC · '+t('tapStream')+(h.busy?' · '+t('streaming'):''),
+        badge:t('badgeHost'),kind:'launch',route:{kind:'Stream',ip:h.ip,name:h.name}});
+      out.push({id:'repair|'+h.ip,title:t('repair'),subtitle:h.ip,badge:t('badgeHost'),kind:'cmd',cmd:'REPAIR_HOST'});
+    });
+    out.push({id:'cmd|rescan',title:t('rescan'),subtitle:t('rescanHint'),badge:t('badgeAct'),badgeCls:'act',kind:'cmd',cmd:'RESCAN'});
+    out.push({id:'cmd|add',title:t('addLocal'),subtitle:t('addLocalHint'),badge:t('badgeAct'),badgeCls:'act',kind:'cmd',cmd:'ADD_VIDEOS'});
+    out.push({id:'cmd|manual',title:t('manual'),subtitle:t('manualHint'),badge:t('badgeAct'),badgeCls:'act',kind:'cmd',cmd:'OPEN_MANUAL_ADDRESS'});
+    return out;
+  }
+  if(tab==='SETTINGS'){
+    const langName=S.lang==='zh'?'简体中文':'English';
+    return [
+      {id:'cmd|language',title:t('lang'),subtitle:langName+' · '+t('langHint'),badge:t('badgeAct'),badgeCls:'act',kind:'cmd',cmd:'TOGGLE_LANGUAGE'},
+      {id:'cmd|watch',title:t('watch'),subtitle:t('watchHint'),badge:t('badgeAct'),badgeCls:'act',kind:'cmd',cmd:'OPEN_WATCH_SETTINGS_HELP'},
+      {id:'cmd|add',title:t('addLocal'),subtitle:t('addLocalHint'),badge:t('badgeAct'),badgeCls:'act',kind:'cmd',cmd:'ADD_VIDEOS'},
+      {id:'cmd|connect',title:t('connectTitle'),subtitle:t('connectHint'),badge:t('badgeAct'),badgeCls:'act',kind:'cmd',cmd:'RESCAN'},
+      {id:'info|about',title:t('about'),subtitle:t('aboutHint'),badge:'',kind:'cmd',cmd:'OPEN_WATCH_SETTINGS_HELP'},
+    ];
+  }
+  return []; // LIBRARY 是富交互 PlaylistPage，不走 HomeItem（ADR 边界）
+}
+function publish(tab){itemsByTab[tab]=homeItems(tab);}
+function logEvent(text,code){S.log.unshift({text,code,ts:new Date().toLocaleTimeString('zh-CN',{hour12:false})});
+  if(S.log.length>60)S.log.length=60;}
+function emit(effect){
+  S.lastEffect=effect.type+(effect.tab?'('+effect.tab+')':'')+(effect.route?'('+effect.route.kind+')':'')+(effect.key?'('+effect.key+')':'');
+  logEvent('HomeEffect: '+esc(S.lastEffect),'');
+  host(effect);
+}
+function host(effect){
+  switch(effect.type){
+    case 'Render': render(); break;
+    case 'Launch': launch(effect.route); break;
+    case 'Command': command(effect.key,effect.itemId); break;
+    case 'Exit': toast(S.lang==='zh'?'首页再按返回 = 退出应用（HomeController.back → HomeEffect.Exit）':'Back again exits app'); break;
+  }
+}
+function dispatch(input,label){
+  S.lastInput=label||input;
+  logEvent('HomeInput: '+esc(S.lastInput),'');
+  switch(input.type){
+    case 'SelectTab': switchTab(input.tab); break;
+    case 'Items': itemsByTab[input.tab]=input.items;
+      if(S.tab===input.tab&&S.items)S.focus=Math.min(S.focus,Math.max(0,S.items.length-1));
+      render(); break;
+    case 'Navigate': move(input.dir); break;
+    case 'Focus': if(S.items&&S.items.length){S.focus=Math.max(0,Math.min(input.i,S.items.length-1));emit({type:'Render'});} break;
+    case 'Status': S.status=input.text; emit({type:'Render'}); break;
+    case 'Confirm': confirm(); break;
+    case 'Back': back(); break;
+  }
+}
+function currentItems(){return itemsByTab[S.tab]||[];}
+function switchTab(tab){
+  S.tab=tab;S.focus=0;S.items=currentItems();
+  if(tab==='CONNECT')startScan();
+  if(tab==='SETTINGS')publish('SETTINGS');
+  emit({type:'Render',tab});
+  mark('tabs');
+}
+function move(dir){
+  if(dir==='LEFT'||dir==='RIGHT'){
+    const i=TABS.indexOf(S.tab),d=dir==='RIGHT'?1:-1;
+    switchTab(TABS[(i+d+TABS.length)%TABS.length]);return;
+  }
+  // LIBRARY 是富交互 PlaylistPage，不走 HomeItem（ADR-001 已知边界）：
+  // 方向键由列表自身的焦点处理，未来 VR 化换成 VrPlaylistView.move()。
+  if(S.tab==='LIBRARY'){
+    const n=visibleLibrary().length;if(!n)return;
+    S.focus=(S.focus+(dir==='DOWN'?1:-1)+n)%n;
+    logEvent('PlaylistPage 本地焦点（不经 HomeController.items）','');
+    emit({type:'Render'});mark('focus');return;
+  }
+  const items=currentItems();if(!items.length)return;
+  const d=dir==='DOWN'?1:-1;
+  S.focus=(S.focus+d+items.length)%items.length;S.items=items;
+  emit({type:'Render'});mark('focus');
+}
+function confirm(){
+  if(S.screen!=='HOME'){playerConfirm();return;}
+  if(S.tab==='LIBRARY'){
+    const list=visibleLibrary();
+    const item=list[S.focus%Math.max(1,list.length)];
+    if(item)launch({kind:'Video',id:item.id,name:item.n});
+    return;
+  }
+  const items=currentItems();const item=items[S.focus];if(!item)return;
+  if(item.kind==='launch')emit({type:'Launch',route:item.route});
+  else emit({type:'Command',key:item.cmd,itemId:item.id});
+  mark('focus');
+}
+function back(){
+  if(S.screen==='PLAYER'){if(S.overlay){S.overlay=null;render();return;}goHome();return;}
+  if(S.tab!=='LIBRARY')switchTab('LIBRARY'); else emit({type:'Exit'});
+}
+/* HomePlatform.command —— 对应 HomeActivity.command() */
+function command(key,id){
+  switch(key){
+    case 'ADD_VIDEOS':{
+      S.added++;const n='示例视频 '+S.added+'.mp4';
+      S.library.unshift({id:100+S.added,n,en:n,dur:'00:05:30',p:0,tag:'2D',h:160});
+      toast(S.lang==='zh'?('已导入 '+n+'（模拟 ACTION_OPEN_DOCUMENT）'):'Imported '+n);
+      render();break;}
+    case 'RESCAN': switchTab('CONNECT');startScan(true);break;
+    case 'OPEN_MANUAL_ADDRESS':
+      switchTab('CONNECT');
+      toast(S.lang==='zh'?'已聚焦「视频 http(s) 地址」输入框':'Focused the video URL field');
+      setTimeout(()=>{const el=$('#manualUrl');if(el){el.focus();el.scrollIntoView({block:'nearest'});}},30);
+      break;
+    case 'CONNECT_DEVICE':{
+      const d=S.devices.find(x=>'device|'+x.ip===id);if(!d)return;
+      S.status=tf('connecting',d.name);render();
+      setTimeout(()=>{
+        if(S.screen!=='HOME')return;
+        for(let i=1;i<=3;i++)S.library.push({id:200+i,n:d.name+' · 片源 '+i,en:d.name+' · Video '+i,
+          dur:'00:2'+i+':10',p:0,tag:'2D',h:200+i*20});
+        toast(tf('imported',d.name,3));S.status=tf('imported',d.name,3);
+        switchTab('LIBRARY');
+      },700);
+      break;}
+    case 'REPAIR_HOST': showPin(id.split('|')[1]);break;
+    case 'TOGGLE_LANGUAGE':
+      S.lang=S.lang==='zh'?'en':'zh';
+      publish('SETTINGS');S.items=currentItems();
+      toast(S.lang==='zh'?'界面语言已切换，Home 重建（无播放态，代价低）':'Language switched, Home recreated');
+      mark('lang');render();break;
+    case 'OPEN_WATCH_SETTINGS_HELP': toast(t('watchHint'));break;
+  }
+}
+/* HomePlatform.launch */
+function launch(route){
+  S.route=route;S.screen='PLAYER';S.overlay=null;
+  if(route.kind==='Stream'){
+    S.viewingMode=3;S.current=0;S.playing=true;
+    if(!S.paired){S.pin=String(Math.floor(1000+Math.random()*9000));S.overlay='pin';}
+    logEvent('PlayerRoute.Stream('+esc(route.ip)+') → MainActivity.startStream()','');
+    mark('launchStream');
+  }else{
+    S.current=route.id;S.playing=true;S.pos=.32;
+    logEvent('PlayerRoute.Video('+esc(route.name)+') → MainActivity.openSource()','');
+    mark('launchVideo');
+  }
+  render();
+}
+function goHome(){
+  logEvent('PlayerLauncher.goHome() → HomeActivity (CLEAR_TOP | SINGLE_TOP)','');
+  S.screen='HOME';S.overlay=null;S.route=null;
+  S.items=currentItems();
+  toast(S.lang==='zh'?'已返回首页：板块 / 焦点 / 滚动位置保留':'Back to Home: tab / focus / scroll preserved');
+  mark('backHome');emit({type:'Render'});
+}
+function startScan(force){
+  if(S.scanned&&!force){return;}
+  S.scanned=false;S.devices=[];S.hosts=[];publish('CONNECT');S.items=currentItems();
+  S.status=t('scanning');render();
+  setTimeout(()=>{
+    if(S.screen!=='HOME'||S.tab!=='CONNECT')return;
+    S.scanned=true;
+    S.devices=[{name:'KAFKA',ip:'192.168.31.254',port:8000,count:66}];
+    S.hosts=[{name:'Kafka',ip:'192.168.31.254',busy:false}];
+    S.status=tf('foundHost',1);publish('CONNECT');S.items=currentItems();
+    mark('connect');emit({type:'Render'});
+  },1100);
+}
+function showPin(ip){S.pin=String(Math.floor(1000+Math.random()*9000));S.overlay='pin';render();}
+/* Toast */
+function toast(msg){S.toast=msg;const el=$('#toast');el.textContent=msg;el.classList.add('on');
+  clearTimeout(S.toastTimer);S.toastTimer=setTimeout(()=>el.classList.remove('on'),2400);}
+function mark(id){if(!S.done[id]){S.done[id]=true;renderInspector();}}
+function visibleLibrary(){
+  const q=S.query.trim().toLowerCase();
+  return S.library.filter(v=>!q||v.n.toLowerCase().includes(q)||v.en.toLowerCase().includes(q));
+}
+
+/* ───────────────────────── 渲染：Home ───────────────────────── */
+function issue(text,fixed){return '<span class="issue'+(fixed?' fixed':'')+'" data-act="issue" title="'+esc(text)+'">'+(fixed?'已修':'P2')+'</span>';}
+function tabButton(tab,i){return '<button class="tab'+(S.tab===tab?' on':'')+'" data-act="tab" data-v="'+tab+'">'+
+  esc(t(TABS[i]==='LIBRARY'?'tabLibrary':TABS[i]==='CONNECT'?'tabConnect':'tabSettings'))+'</button>';}
+function renderHome(){
+  let body='';
+  if(S.tab==='LIBRARY'){
+    const list=visibleLibrary();
+    body='<div class="pl-header">'+
+      '<button class="back" data-act="key" data-v="BACK" title="返回">↩</button>'+
+      '<span class="pl-title">'+esc(t('playlist'))+'</span><span class="count">'+list.length+' '+(S.lang==='zh'?'个片源':'items')+'</span>'+
+      '<span class="spacer"></span>'+
+      '<button class="icon-btn" data-act="search" title="搜索">⌕</button>'+
+      '<button class="icon-btn" data-act="grid" title="'+(S.lang==='zh'?'切换封面 / 列表':'Cover / list')+'">▦</button>'+
+      '<button class="icon-btn" data-act="add" title="'+esc(t('addLocal'))+'">＋</button>'+
+      '<button class="icon-btn" data-act="tab" data-v="CONNECT" title="连接设备">⇄</button>'+
+      '<button class="icon-btn" data-act="vrmode" title="进入 VR 模式（戴上头显）">◉</button>'+
+      issue('旧版：串流入口藏在播放列表页 header 的小图标里，4 层深；新版已提升为一级板块',true)+
+      '</div>'+
+      (S.query?'<div class="addr-row" style="margin-bottom:8px"><input id="searchBox" value="'+esc(S.query)+'" placeholder="'+(S.lang==='zh'?'搜索片名':'Search titles')+'"></div>':'');
+    if(!list.length){
+      body+='<div class="empty">'+esc(t('empty'))+'<br><span style="font-size:11px">'+esc(t('emptyHint'))+'</span></div>';
+    }else if(S.gridMode){
+      body+='<div class="pl-grid">'+list.map((v,i)=>
+        '<div class="tile'+(i===S.focus?' focus':'')+'" data-act="video" data-v="'+v.id+'">'+
+        cover(v,true)+'<div class="n">'+esc(v.n)+'</div></div>').join('')+'</div>';
+    }else{
+      body+='<div class="pl-list">'+list.map((v,i)=>
+        '<div class="vrow'+(i===S.focus?' focus':'')+'" data-act="video" data-v="'+v.id+'">'+
+        cover(v,false)+
+        '<div class="meta"><div class="n">'+esc(S.lang==='zh'?v.n:v.en)+'</div>'+
+        '<div class="d">'+esc(v.tag)+' · '+esc(v.dur)+(v.p>0?' · '+Math.round(v.p*100)+'%':'')+'</div>'+
+        '<div class="bar"><i style="width:'+Math.round(v.p*100)+'%"></i></div></div></div>').join('')+'</div>';
+    }
+  }else if(S.tab==='CONNECT'){
+    const items=currentItems();
+    body='<div class="page-title">'+esc(t('connectTitle'))+issue('片源设备与串流主机在新版已合并为同一板块，但仍是两套卡片；手填 IP 兜底为新增',true)+'</div>'+
+      '<div class="scan-status">'+esc(S.status||t('scanning'))+'</div>'+
+      '<div class="page-sub">'+esc(t('connectHint'))+'</div>'+
+      items.map((it,i)=>card(it,i)).join('')+
+      '<div class="divider"></div><div class="mini-label">'+esc(t('manual'))+'</div>'+
+      '<div class="addr-row"><input id="manualUrl" value="'+esc(S.manualUrl)+'" placeholder="'+esc(t('urlHint'))+'">'+
+      '<button data-act="open-url">'+esc(t('open'))+'</button></div>'+
+      '<div class="addr-row"><input id="manualHost" value="'+esc(S.manualHost)+'" placeholder="'+esc(t('ipHint'))+'">'+
+      '<button data-act="probe-host">'+esc(t('probe'))+'</button></div>'+
+      '<div class="page-sub" style="margin-top:8px">'+esc(t('manualHint'))+'</div>';
+  }else{
+    const items=currentItems();
+    body='<div class="page-title">'+esc(t('settings'))+issue('Home 只放全局配置；观看参数仍在播放页（对应 ADR 不变量）',true)+'</div>'+
+      '<div class="page-sub">'+esc(t('watchHint'))+'</div>'+
+      items.map((it,i)=>card(it,i)).join('')+
+      '<div class="divider"></div><div class="page-sub">'+esc(t('aboutHint'))+'</div>';
+  }
+  return '<div class="home-head"><span class="brand"><b>KINO</b><i>VR</i></span>'+
+    '<div class="tabs">'+TABS.map(tabButton).join('')+'</div></div>'+
+    '<div class="content"><div class="page" data-scroll="'+S.tab+'">'+body+'</div></div>';
+}
+function cover(v,big){
+  const label=esc((S.lang==='zh'?v.n:v.en).slice(0,10));
+  return '<div class="cover" style="background:linear-gradient(140deg,hsl('+v.h+',62%,42%),hsl('+((v.h+50)%360)+',55%,20%))">'+label+'</div>';
+}
+function card(it,i){
+  return '<div class="card'+(i===S.focus?' focus':'')+'" data-act="item" data-i="'+i+'">'+
+    '<div class="row1"><span class="t">'+esc(it.title)+'</span>'+
+    (it.badge?'<span class="badge '+(it.badgeCls||'')+'">'+esc(it.badge)+'</span>':'')+
+    (it.id&&it.id.startsWith('cmd|language')?issue('语言切换后果最重（recreate）却无二次确认，混在普通条目里',false):'')+
+    (it.id&&it.id.startsWith('repair|')?issue('旧版唯一入口是长按且无图标；新版已提供显式「重新配对」条目',true):'')+
+    '</div>'+(it.subtitle?'<div class="s">'+esc(it.subtitle)+'</div>':'')+'</div>';
+}
+
+/* ───────────────────────── 渲染：Player ───────────────────────── */
+function renderPlayer(){
+  const v=S.library.find(x=>x.id===S.current)||S.library[0];
+  const isStream=S.route&&S.route.kind==='Stream';
+  const name=isStream?(S.route.name+' · '+(S.lang==='zh'?'大屏串流':'Big-screen stream')):(S.lang==='zh'?v.n:v.en);
+  const detail=isStream?'HEVC 1920×1080@60 · Opus 48kHz 立体声':esc(v.tag)+' · '+esc(v.dur)+' · 大屏模式='+(S.viewingMode===3);
+  let world='';
+  const flipCss=['none','scaleY(-1)','rotate(180deg)'][S.screenFlip];
+  if(isStream){
+    world='<div class="screen-plane"><div class="silver"><div class="silver-in" style="transform:'+flipCss+'">'+
+      '<div class="desktop"><div class="win a"></div><div class="win b"></div><div class="taskbar"></div></div>'+
+      '</div></div></div>'+
+      '<div class="flipinfo">'+esc(t('orient'))+'：'+esc(t('flip'+S.screenFlip))+' · '+esc(t('size'))+' '+S.screenFov+'°'+
+      (S.screenFlip>0?issue('三态方向开关修正「手机水平反放 180°」与「大屏 shader Y 符号相反」，VR 球面路径零影响',true):'')+'</div>';
+  }else if(S.viewingMode===0){
+    world='<div class="lens"><div class="pano"></div></div><div class="lens"><div class="pano"></div></div>';
+  }else if(S.viewingMode===1){
+    world='<div class="lens" style="width:420px;height:420px"><div class="pano"></div></div>';
+  }else if(S.viewingMode===2){
+    world='<div class="flat" style="transform:'+flipCss+'"><div class="pano"></div></div>';
+  }else{
+    world='<div class="screen-plane"><div class="silver"><div class="silver-in" style="transform:'+flipCss+'">'+
+      '<div class="pano" style="position:absolute;inset:0"></div></div></div></div>'+
+      '<div class="flipinfo">'+esc(t('bigHint'))+' · '+esc(t('orient'))+'：'+esc(t('flip'+S.screenFlip))+'</div>';
+  }
+  const modes=[t('dual'),t('single'),t('standard'),t('bigScreen')];
+  return '<div class="player stars"><div class="world">'+world+'</div>'+
+    '<div class="pbar top"><span class="logo"><span class="brand"><b>KINO</b><i>VR</i></span></span>'+
+    '<div class="headings"><div class="vt">'+esc(name)+'</div><div class="vd">'+esc(detail)+'</div></div>'+
+    '<div class="acts">'+
+    '<button class="icon-btn" data-act="pbtn" data-v="gyro" title="陀螺仪">◎</button>'+
+    '<button class="icon-btn" data-act="pbtn" data-v="center" title="重新居中">⊕</button>'+
+    '<button class="icon-btn" data-act="pbtn" data-v="reset" title="重置普通视频大小">⟲</button>'+
+    '<button class="icon-btn" data-act="pbtn" data-v="settings" title="'+esc(t('settings'))+'">⚙</button>'+
+    '<button class="icon-btn" data-act="pbtn" data-v="playlist" title="'+esc(t('playlist'))+'">☰</button>'+
+    '<button class="icon-btn" data-act="home" title="返回首页">↩</button>'+
+    '</div></div>'+
+    '<div class="pbar bottom"><div class="prow">'+
+    '<button class="icon-btn" data-act="play" title="播放/暂停">'+(S.playing?'❚❚':'▶')+'</button>'+
+    '<button class="icon-btn" data-act="seek" data-v="-1" title="快退">«</button>'+
+    '<div class="seek" data-act="seekbar"><i style="width:'+Math.round(S.pos*100)+'%"></i></div>'+
+    '<button class="icon-btn" data-act="seek" data-v="1" title="快进">»</button>'+
+    '<span class="times">12:34 / '+esc(isStream?'LIVE':v.dur)+'</span></div>'+
+    '<div class="tune">'+
+    tune('ipd',t('ipd'),S.ipd.toFixed(1)+' cm')+
+    tune('speed',t('speed'),S.speed.toFixed(1)+'×')+
+    tune('fov',t('fov'),S.fov+'°')+'</div></div>'+
+    '<div style="position:absolute;bottom:64px;left:0;right:0;text-align:center;font-size:10px;color:var(--muted)">'+
+    esc(modes[S.viewingMode])+' · '+esc(S.lang==='zh'?'按 Esc / 返回键回到首页':'Press Esc / Back to Home')+'</div>'+
+    overlayHtml()+'</div>';
+}
+function tune(key,label,val){
+  return '<div class="tgroup"><b data-act="tune" data-k="'+key+'" data-v="-1">−</b>'+
+    '<div class="lab">'+esc(label)+'<em>'+esc(val)+'</em></div>'+
+    '<b data-act="tune" data-k="'+key+'" data-v="1">＋</b></div>';
+}
+function overlayHtml(){
+  if(!S.overlay)return '';
+  const o=S.overlay;
+  if(o==='pin'){
+    return '<div class="overlay"><div class="panel" style="width:min(520px,92%)"><h2>'+esc(t('pinTitle'))+'</h2>'+
+      '<div class="pin-hint">'+esc(t('pinHint'))+'</div><div class="pin-num">'+esc(S.pin)+'</div>'+
+      '<div class="pin-hint" style="text-align:center">'+esc(t('pinWait'))+'</div>'+
+      '<div class="panel-actions">'+
+      '<button data-act="pin-cancel">'+esc(t('cancel'))+'</button>'+
+      '<button class="primary" data-act="pin-ok">'+(S.lang==='zh'?'模拟在 Sunshine 输入 PIN':'Simulate PIN entry on PC')+'</button>'+
+      '</div></div></div>';
+  }
+  if(o==='selector'){
+    const c=S.selector;
+    return '<div class="overlay"><div class="panel" style="width:min(480px,92%)"><h2>'+esc(c.title)+'</h2>'+
+      c.options.map((opt,i)=>'<button class="choice'+(i===c.selected?' on':'')+'" data-act="choice" data-v="'+i+'">'+esc(opt)+'</button>').join('')+
+      '<div class="panel-actions"><button data-act="close-overlay">'+esc(t('cancel'))+'</button></div></div></div>';
+  }
+  if(o==='playerPlaylist'){
+    const list=S.library;
+    const eyeHtml='<div class="vr-eye-list">'+list.map((v,i)=>
+      '<div class="li'+(i===S.vrListFocus?' on':'')+'" data-act="switch-video" data-v="'+v.id+'">'+
+      (i===S.vrListFocus?'▸ ':'　 ')+esc(S.lang==='zh'?v.n:v.en)+'</div>').join('')+'</div>';
+    return '<div class="overlay"><div class="panel"><h2>'+esc(t('dualPlaylist'))+
+      issue('复用 VrPlaylistView 的双眼绘制与手柄操作，H3 几乎零成本',true)+'</h2>'+
+      '<div class="page-sub" style="margin-bottom:10px">'+esc(t('dualPlaylistHint'))+'</div>'+
+      '<div class="vr-list">'+eyeHtml+eyeHtml+'</div>'+
+      '<div class="panel-actions"><button data-act="close-overlay">'+esc(t('close'))+'</button></div></div></div>';
+  }
+  if(o==='settings'){
+    const modes=[t('dual'),t('single'),t('standard'),t('bigScreen')];
+    const flips=[t('flip0'),t('flip1'),t('flip2')];
+    const sizes=['55°','70°','85°','100°'];
+    const pcard=(title,sub,inner)=>'<div class="pcard"><h3>'+esc(title)+'</h3>'+(sub?'<div class="sub">'+esc(sub)+'</div>':'')+inner+'</div>';
+    const row=(lbl,key,val,extra)=>'<div class="actrow"><span class="lbl">'+esc(lbl)+'</span>'+
+      '<button class="sbtn" data-act="setting" data-k="'+key+'">'+esc(val)+'</button>'+(extra||'')+'</div>';
+    const left=pcard(t('viewingMode'),'',row(t('viewingMode'),'viewingMode',modes[S.viewingMode]))+
+      pcard(t('bigScreen'),t('bigHint'),
+        row(t('size'),'screenFov',S.screenFov+'°')+
+        row(t('orient'),'screenFlip',flips[S.screenFlip])+
+        issue('大屏方向三态：正常 / 上下翻转 / 旋转 180°',true))+
+      pcard(t('picture'),'',row(t('aspect'),'aspect',[t('letterbox'),t('full')][S.aspect])+
+        row(t('shape'),'shape',[t('rect'),t('ellipse')][S.shape]));
+    const right=pcard(t('picture'),'',
+        row(t('ipd'),'ipd',S.ipd.toFixed(1)+' cm')+
+        row(t('fov'),'fov',S.fov+'°')+
+        row(t('sourceProj'),'projection',t('dual'))+
+        '<div class="actrow"><span class="lbl">'+esc(t('swap'))+'</span><span class="tag">Switch</span></div>'+
+        (S.viewingMode===3?issue('P2 待修：大屏模式仍显示全套双镜 VR 参数（单眼直径 / 畸变 / 交换左右眼）',false):''))+
+      pcard(t('language'),'',row(t('language'),'language',S.lang==='zh'?'简体中文':'English')+
+        issue('语言切换会 recreate() 并手工恢复 7 个 bundle key，却无确认',false));
+    return '<div class="overlay"><div class="panel"><h2>'+esc(t('settings'))+
+      '<span class="tag">MainActivity · 播放页内快捷设置</span></h2>'+
+      '<div class="cols"><div>'+left+'</div><div>'+right+'</div></div>'+
+      '<div class="panel-actions">'+
+      '<button data-act="setting" data-k="reset">'+esc(t('resetDef'))+issue('「恢复默认」有确认，「语言切换」反而没有',false)+'</button>'+
+      '<button data-act="setting" data-k="debug">'+esc(t('debug'))+'</button>'+
+      '<button class="primary" data-act="close-overlay">'+esc(t('close'))+'</button></div>'+
+      '<div class="page-sub" style="margin-top:8px">'+esc(S.lang==='zh'?
+        '注意：2 个选项的设置项点击后直接切换，≥3 个才弹选择器 —— 外观完全一样，行为不可预期（chooseSetting:739）。':
+        'Two-option settings toggle instantly; 3+ options open a selector, with identical looks.')+
+      issue('二态直切 vs 多态弹框，同样 dp(156)×dp(40) 按钮',false)+'</div></div></div>';
+  }
+  if(o==='confirm'){
+    return '<div class="overlay"><div class="panel" style="width:min(420px,92%)"><h2>'+esc(t('confirm'))+'</h2>'+
+      '<div class="page-sub">'+esc(S.confirmText||'')+'</div>'+
+      '<div class="panel-actions"><button data-act="close-overlay">'+esc(t('cancel'))+'</button>'+
+      '<button class="primary" data-act="confirm-ok">'+esc(t('confirm'))+'</button></div></div></div>';
+  }
+  return '';
+}
+
+/* ───────────────────────── 播放页交互 ───────────────────────── */
+function playerConfirm(){
+  if(S.overlay==='playerPlaylist'){const v=S.library[S.vrListFocus];if(v)switchVideo(v.id);return;}
+  if(S.overlay==='selector'){applyChoice(S.selector.selected);return;}
+  if(S.overlay==='pin'){return;}
+  if(S.overlay){S.overlay=null;render();return;}
+  S.playing=!S.playing;render();
+}
+function switchVideo(id){S.current=id;S.overlay=null;S.route={kind:'Video',id,name:(S.library.find(x=>x.id===id)||{}).n};
+  toast(S.lang==='zh'?'已在播放页内换片，未退出播放页':'Switched video without leaving the player');
+  mark('switchVideo');render();}
+function openSelector(k){
+  const map={
+    viewingMode:{title:t('viewingMode'),options:[t('dual'),t('single'),t('standard'),t('bigScreen')],sel:S.viewingMode},
+    screenFlip:{title:t('orient'),options:[t('flip0'),t('flip1'),t('flip2')],sel:S.screenFlip},
+    screenFov:{title:t('size'),options:['55°','70°','85°','100°'],sel:[55,70,85,100].indexOf(S.screenFov)},
+    projection:{title:t('sourceProj'),options:[t('dual'),t('single'),t('standard')],sel:0},
+    aspect:{title:t('aspect'),options:[t('letterbox'),t('full')],sel:S.aspect},
+    shape:{title:t('shape'),options:[t('rect'),t('ellipse')],sel:S.shape},
+    ipd:{title:t('ipd'),options:['6.0 cm','6.2 cm','6.4 cm'],sel:1},
+    fov:{title:t('fov'),options:['90°','96°','100°'],sel:1},
+  };
+  const c=map[k];if(!c)return;
+  // 复刻 chooseSetting：两选项直接切换，≥3 项才弹选择器
+  if(c.options.length===2){applyChoiceFor(k,(c.sel+1)%2);return;}
+  S.selector={key:k,title:c.title,options:c.options,selected:c.sel<0?0:c.sel};S.overlay='selector';render();
+}
+function applyChoice(i){
+  const c=S.selector;if(!c)return;
+  applyChoiceFor(c.key,i);S.overlay=null;S.selector=null;render();
+}
+function applyChoiceFor(k,i){
+  switch(k){
+    case 'viewingMode':S.viewingMode=i;mark('watchParams');break;
+    case 'screenFlip':S.screenFlip=i;mark('watchParams');
+      toast(S.lang==='zh'?('画面方向：'+t('flip'+i)):'Screen orientation: '+t('flip'+i));break;
+    case 'screenFov':S.screenFov=[55,70,85,100][i]||70;break;
+    case 'aspect':S.aspect=i;break;
+    case 'shape':S.shape=i;break;
+    case 'ipd':S.ipd=[6.0,6.2,6.4][i]||6.2;break;
+    case 'fov':S.fov=[90,96,100][i]||96;break;
+  }
+}
+
+/* ── VR 菜单态（H4 / S4a 原型）：world-locked 单平面，每眼各画一份 ── */
+const VR_TABS=['LIBRARY','PLAY','WATCH'];
+const VR_TUNE_KEYS=['ipd','screenFov','screenFlip','speed','fov'];
+function vclock(sec){const m=Math.floor(sec/60),x=Math.floor(sec%60);
+  return (m<10?'0':'')+m+':'+(x<10?'0':'')+x;}
+function enterVr(){
+  S.screen='VRMENU';S.vrMode='target';S.vrTab='LIBRARY';S.vrFocus=0;S.vrPlaying=false;S.overlay=null;
+  logEvent('PlayerLauncher: KIND_VR_MENU → MainActivity（VR 菜单态，不立即起片）','');
+  toast(S.lang==='zh'?'已进入 VR 模式：放入头显，用手柄 D-pad / A / B 操作':'VR mode on');
+  render();
+}
+function exitVr(){
+  S.vrMode='off';S.screen='HOME';S.vrPlaying=false;S.overlay=null;
+  logEvent('B / Menu → PlayerLauncher.goHome() → 2D 首页','');
+  render();
+}
+function vrSelect(id){
+  const v=S.library.find(x=>x.id===id);if(!v)return;
+  S.current=id;S.vrPlaying=true;S.vrTab='PLAY';S.pos=0;S.playing=true;
+  logEvent('HomeEffect.Launch → 视频上银幕，菜单收成下沿控制条','');
+  render();
+}
+function vrTune(raw){
+  const parts=raw.split(':'),key=parts[0],d=+parts[1];
+  const fovs=[55,70,85,100];
+  if(key==='ipd')S.ipd=Math.max(5,Math.min(8,+(S.ipd+d*.1).toFixed(1)));
+  else if(key==='screenFov')S.screenFov=fovs[Math.max(0,Math.min(3,fovs.indexOf(S.screenFov)+(d>0?1:-1)))]||70;
+  else if(key==='screenFlip')S.screenFlip=(S.screenFlip+(d>0?1:2))%3;
+  else if(key==='speed')S.speed=Math.max(.5,Math.min(2,+(S.speed+d*.1).toFixed(1)));
+  else if(key==='fov')S.fov=Math.max(70,Math.min(120,S.fov+d*2));
+  render();
+}
+function vrRowCount(){
+  if(S.vrTab==='LIBRARY')return Math.min(6,Math.max(1,visibleLibrary().length));
+  if(S.vrTab==='WATCH')return VR_TUNE_KEYS.length;
+  return 1;
+}
+function vrSemantic(v){
+  if(v==='BACK'){
+    if(S.vrPlaying){S.vrPlaying=false;S.vrTab='LIBRARY';render();}
+    else exitVr();
+    return;
+  }
+  if(v==='LEFT'||v==='RIGHT'){
+    const i=VR_TABS.indexOf(S.vrTab);
+    S.vrTab=VR_TABS[(i+(v==='RIGHT'?1:-1)+VR_TABS.length)%VR_TABS.length];
+    S.vrFocus=0;render();return;
+  }
+  if(v==='UP'||v==='DOWN'){
+    const n=vrRowCount();S.vrFocus=(S.vrFocus+(v==='DOWN'?1:-1)+n)%n;render();return;
+  }
+  if(v==='CONFIRM'){
+    if(S.vrTab==='LIBRARY'){
+      const list=visibleLibrary();const item=list[S.vrFocus%Math.max(1,list.length)];
+      if(item)vrSelect(item.id);
+    }else if(S.vrTab==='PLAY'){S.playing=!S.playing;render();}
+    else vrTune(VR_TUNE_KEYS[S.vrFocus%VR_TUNE_KEYS.length]+':1');
+  }
+}
+function vrSide(){
+  const zh=S.lang==='zh',cur=S.library.find(x=>x.id===S.current);
+  return '<div class="vside"><h3>'+(zh?'当前播放':'Now playing')+'</h3>'+
+    '<p>'+esc(cur?cur.n:(zh?'未选择':'None'))+'</p>'+
+    '<p>IPD '+S.ipd.toFixed(1)+' cm · '+S.screenFov+'° · '+S.speed.toFixed(1)+'x</p>'+
+    '<p>'+(zh?'焦点：橙实心底 + 近黑字':'Focus: solid amber block')+'</p>'+
+    '<p>'+(zh?'数据：HomeController.state':'Data: HomeController.state')+'</p>'+
+    '<p>'+(zh?'渲染：VrMenuRenderer → Bitmap 纹理':'Render: VrMenuRenderer → texture')+'</p></div>';
+}
+function renderVrMenu(){
+  const zh=S.lang==='zh';
+  const tabs=[['LIBRARY',zh?'片源库':'Library'],['PLAY',zh?'播放':'Playback'],['WATCH',zh?'观看参数':'Viewing']];
+  const head='<div class="vhead"><span class="brand"><b>KINO</b><i>VR</i></span>'+
+    '<div class="vtabs">'+tabs.map(([k,n])=>
+      '<button class="vtab'+(S.vrTab===k?' on':'')+'" data-act="vtab" data-v="'+k+'">'+n+'</button>').join('')+
+    '</div><span style="flex:1"></span><span class="vtag">world-locked 单平面 · 960×540</span>'+
+    '<button class="vtab" data-act="vexit">'+(zh?'退出 VR ↩':'Exit VR ↩')+'</button></div>';
+  let main='';
+  if(S.vrTab==='PLAY'&&S.vrPlaying){
+    const cur=S.library.find(x=>x.id===S.current);
+    main='<div class="vstage"><div class="vvideo">'+esc(cur?cur.n:(zh?'播放中':'Playing'))+
+      '<small>'+(zh?'视频上银幕 · 菜单已收成下沿控制条':'Video on the plane · menu collapsed to the bottom bar')+'</small></div>'+
+      '<div class="vctrl">'+
+      '<button data-act="vplay">'+(S.playing?'❚❚':'▶')+'</button>'+
+      '<button data-act="vseek" data-v="-0.05">«</button>'+
+      '<div class="vseekbar"><i style="width:'+Math.round(S.pos*100)+'%"></i></div>'+
+      '<button data-act="vseek" data-v="0.05">»</button>'+
+      '<span class="vtime">'+vclock(S.pos*330)+' / 05:30</span>'+
+      '<button data-act="vtab" data-v="WATCH">'+(zh?'观看参数':'Viewing')+'</button>'+
+      '</div></div>';
+  }else if(S.vrTab==='LIBRARY'){
+    const list=visibleLibrary().slice(0,6);
+    main='<div class="vlist">'+list.map((v,i)=>
+      '<div class="vrow'+(i===S.vrFocus?' on':'')+'" data-act="vvideo" data-v="'+v.id+'">'+
+      '<span>'+esc(zh?v.n:v.en)+'</span><span class="vsub">'+esc(v.tag||'2D')+' · '+esc(v.dur||'')+'</span></div>').join('')+
+      '</div>'+vrSide();
+  }else if(S.vrTab==='WATCH'){
+    const flips=zh?['正常','上下翻转','旋转 180°']:['Normal','Flip Y','Rotate 180'];
+    const tune=[['ipd',zh?'瞳距 IPD':'IPD',S.ipd.toFixed(1)+' cm'],
+      ['screenFov',zh?'银幕大小':'Screen size',S.screenFov+'°'],
+      ['screenFlip',zh?'画面方向':'Orientation',flips[S.screenFlip]],
+      ['speed',zh?'播放速度':'Speed',S.speed.toFixed(1)+'x'],
+      ['fov',zh?'视场角':'FOV',S.fov+'°']];
+    main='<div class="vlist">'+tune.map(([k,n,val],i)=>
+      '<div class="vrow'+(i===S.vrFocus?' on':'')+'" data-act="vfocus" data-v="'+i+'">'+
+      '<span>'+n+'</span><span class="vsub">'+val+'</span>'+
+      '<button class="vtab" data-act="vtune" data-v="'+k+':-1">−</button>'+
+      '<button class="vtab" data-act="vtune" data-v="'+k+':1">＋</button></div>').join('')+
+      '</div>'+vrSide();
+  }else{
+    main='<div class="vstage"><div class="vvideo">'+(zh?'选一个片源开始':'Pick a video to start')+
+      '<small>'+(zh?'在「片源库」里按 A 确认，视频就会上银幕':'Press A on a library row')+'</small></div>'+
+      '<div class="vctrl"><button data-act="vtab" data-v="LIBRARY">'+(zh?'去片源库':'Open library')+'</button>'+
+      '<div class="vseekbar"><i style="width:'+Math.round(S.pos*100)+'%"></i></div>'+
+      '<span class="vtime">'+vclock(S.pos*330)+' / 05:30</span></div></div>'+vrSide();
+  }
+  const foot='<div class="vfoot">D-pad '+(zh?'移动焦点':'move')+' · A '+(zh?'确认':'confirm')+
+    ' · B '+(zh?'返回 2D 首页':'back to 2D Home')+' · Menu '+(zh?'呼出控制条':'toggle HUD')+
+    ' ｜ '+(zh?'风格与 2D 首页一致：黑橙拼色、橙实心焦点':'Same tokens as 2D Home: black / amber, solid focus')+'</div>';
+  return '<div class="vrmenu">'+head+'<div class="vbody">'+main+'</div>'+foot+'</div>';
+}
+
+/* ───────────────────────── 主渲染 / VR 叠层 ───────────────────────── */
+function render(){
+  const screen=$('#screen');
+  screen.className='stars screen'+(S.vrMode!=='off'?' hidden':'');
+  screen.innerHTML=S.screen==='HOME'?renderHome():S.screen==='VRMENU'?renderVrMenu():renderPlayer();
+  const page=screen.querySelector('.page');
+  if(page){page.scrollTop=S.scroll[S.tab]||0;}
+  syncVr();renderInspector();
+}
+function syncVr(){
+  const ov=$('#vrOverlay');
+  ov.className='vr-overlay'+(S.vrMode!=='off'?' on '+S.vrMode:'');
+  if(S.vrMode==='off')return;
+  // clone 的内容需要套一层 .screen 容器，否则 flex 列布局 / 内边距会丢失
+  const html='<div class="screen stars" style="position:absolute;inset:0">'+$('#screen').innerHTML+'</div>';
+  ov.querySelectorAll('.screen-view').forEach(v=>v.innerHTML=html);
+  $('#vrBadge').innerHTML=S.screen==='VRMENU'?
+    (S.lang==='zh'?'<b>H4 / S4a VR 模式</b>：首页右上按钮 → MainActivity 的 VR 菜单态；同一份 HomeState 在左右眼各画一次，菜单贴 world-locked 平面，选片后视频上银幕、菜单收成下沿控制条。Controller / Route 一行不改。':
+     '<b>H4 / S4a VR mode</b>: one world-locked plane, one HomeState rendered per eye; picking a video moves it onto the screen.'):
+    S.vrMode==='legacy'?
+    (S.lang==='zh'?'<b>现状（2D 叠层）</b>：所有 Android View / Dialog 都是单屏 2D，不分左右眼 —— 左右眼各看到同一平面 UI 的一半，中间内容被透镜劈开，文字被裁切、无法聚焦。':
+     '<b>Current (2D overlay)</b>: Android Views are a single flat screen. Each eye sees half of it; text is cut and cannot be focused.'):
+    (S.lang==='zh'?'<b>H4 目标（VrHomeRenderer）</b>：左右眼各渲染一份完整 Home，数据仍是同一份 HomeState.items；中央准星 / 手柄焦点对应 HomeInput。Controller / Host / Route 一行不改。':
+     '<b>H4 target (VrHomeRenderer)</b>: each eye renders a full Home from the same HomeState.items; Controller / Host / Route stay unchanged.');
+  if(S.vrMode==='legacy')mark('vrLegacy');else mark('vrTarget');
+}
+function renderInspector(){
+  const st=[
+    ['screen',S.screen],['tab',S.tab],['focus',S.focus],
+    ['items',(S.tab==='LIBRARY'?visibleLibrary().length:currentItems().length)],
+    ['status',S.status||'—'],['route',S.route?(S.route.kind+(S.route.ip?' '+S.route.ip:'')):'null'],
+    ['lastInput',S.lastInput],['lastEffect',S.lastEffect],
+    ['vrMode',S.vrMode],['vrTab',S.vrTab],['vrPlaying',S.vrPlaying?'true':'false'],['lang',S.lang],
+  ];
+  $('#stateGrid').innerHTML=st.map(([k,v])=>'<div class="k">'+k+'</div><div class="v">'+esc(v)+'</div>').join('');
+  $('#log').innerHTML=S.log.map(e=>'<div class="e"><b>'+esc(e.ts)+'</b> '+e.text+(e.code?' <code>'+esc(e.code)+'</code>':'')+'</div>').join('');
+  $('#checks').innerHTML=CHECKS.map(([id,label])=>'<li class="'+(S.done[id]?'done':'')+'"><span class="box">'+(S.done[id]?'✓':'')+'</span>'+esc(label)+'</li>').join('');
+  $('#checkCount').textContent=Object.keys(S.done).length+' / '+CHECKS.length;
+  $('#notes').innerHTML=
+    '<span class="legend-dot" style="background:var(--warn)"></span><b>P2</b> = 上一轮总结里待修的 UI 问题<br>'+
+    '<span class="legend-dot" style="background:var(--ok)"></span><b>已修</b> = 本轮首页化 / 阶段 4 已解决<br>'+
+    '<span class="legend-dot" style="background:var(--accent)"></span>虚线徽章可悬停看说明，点击会记入事件流<br><br>'+
+    '原型按 <b>HomeContract.kt</b> 复刻了状态机：tab 环绕、focus 环绕、Confirm 分流 Launch / Command、Back 先回片源库再 Exit。<br>'+
+    '配色取自 <b>UiStyle.kt</b>（#0B0C0E / #191B1F / #FF7A18），文案取自 <b>AppText.java</b>。<br>'+
+    '<b>注意：</b>这是交互原型，不含真实 GL 渲染、UDP 发现与 Sunshine 配对；设备与主机为模拟数据。';
+  $('#foot').innerHTML='对应源码：<code>HomeActivity.kt</code> / <code>HomeContract.kt</code> / <code>HomeConnectionsPage.kt</code> / '+
+    '<code>HomeSettingsPage.kt</code> / <code>PlaylistPage.kt</code> / <code>MainActivity.kt</code> / <code>AppText.java</code>。'+
+    ' 架构边界见 <code>docs/architecture/home-navigation.md</code>（ADR-001）。';
+  $('#langSeg').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.lang));
+  $('#viewSeg').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.vrMode));
+  $('[data-act="issues"]').textContent=S.lang==='zh'?('问题标注：'+(S.issues?'开':'关')):('Issue marks: '+(S.issues?'on':'off'));
+}
+
+/* ───────────────────────── 事件分发 ───────────────────────── */
+function handle(act,el,ev){
+  const v=el.dataset.v;
+  switch(act){
+    case 'lang':
+      if(S.lang===v)return;
+      S.lang=v;publish('SETTINGS');S.items=currentItems();
+      toast(S.lang==='zh'?'已切到中文界面':'Switched to English');mark('lang');render();break;
+    case 'view':
+      S.vrMode=v;render();break;
+    case 'issues':
+      S.issues=!S.issues;document.body.classList.toggle('show-issues',S.issues);
+      if(S.issues)mark('issues');renderInspector();break;
+    case 'reset':
+      clearTimeout(S.toastTimer);S=initial();publish('CONNECT');S.items=[];
+      logEvent('原型已重置','');
+      render();break;
+    case 'vrmode': enterVr();break;
+    case 'vexit': exitVr();break;
+    case 'vtab': S.vrTab=v;S.vrFocus=0;render();break;
+    case 'vvideo': vrSelect(+v);break;
+    case 'vplay': S.playing=!S.playing;render();break;
+    case 'vseek': S.pos=Math.max(0,Math.min(1,S.pos+(+v)));render();break;
+    case 'vtune': vrTune(v);break;
+    case 'vfocus': S.vrFocus=+v;render();break;
+    case 'key': semantic(v);break;
+    case 'tab': dispatch({type:'SelectTab',tab:v},'SelectTab('+v+')');break;
+    case 'item':{
+      const i=+el.dataset.i;
+      dispatch({type:'Focus',i},'Focus('+i+')');
+      dispatch({type:'Confirm'},'Confirm');break;}
+    case 'video': launch({kind:'Video',id:+v,name:(S.library.find(x=>x.id===+v)||{}).n});break;
+    case 'grid': S.gridMode=!S.gridMode;render();break;
+    case 'search': S.query=S.query?'':'星际';render();
+      setTimeout(()=>{const b=$('#searchBox');if(b)b.focus();},20);break;
+    case 'add': command('ADD_VIDEOS','cmd|add');break;
+    case 'open-url':{
+      const raw=S.manualUrl.trim();
+      if(!/^https?:\/\/[^/\s]+/i.test(raw)){toast(t('invalid'));return;}
+      launch({kind:'Video',id:S.library[0].id,name:raw.split('/').pop()||'network.mp4'});break;}
+    case 'probe-host':{
+      const raw=S.manualHost.trim();
+      if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(raw)){toast(t('invalid'));return;}
+      S.hosts=S.hosts.filter(h=>h.ip!==raw);S.hosts.push({name:'手动主机 '+raw,ip:raw,busy:false});
+      S.status=tf('foundHost',S.hosts.length);publish('CONNECT');S.items=currentItems();
+      toast(S.lang==='zh'?('已探测到 '+raw+' 上的 Sunshine'):'Found Sunshine at '+raw);render();break;}
+    case 'pbtn':
+      if(v==='settings'){S.overlay='settings';render();}
+      else if(v==='playlist'){S.overlay='playerPlaylist';S.vrListFocus=Math.max(0,S.library.findIndex(x=>x.id===S.current));render();}
+      else if(v==='gyro')toast(S.lang==='zh'?'陀螺仪：已切换':'Gyroscope toggled');
+      else if(v==='center')toast(S.lang==='zh'?'视角已重新居中':'View recentered');
+      else toast(S.lang==='zh'?'普通视频大小已重置':'Flat video size reset');
+      break;
+    case 'home': goHome();break;
+    case 'play': S.playing=!S.playing;render();break;
+    case 'seek': S.pos=Math.max(0,Math.min(1,S.pos+(+v)*.05));render();break;
+    case 'seekbar':{
+      const r=el.getBoundingClientRect();S.pos=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));render();break;}
+    case 'tune':{
+      const k=el.dataset.k,d=+v;
+      if(k==='ipd')S.ipd=Math.max(5,Math.min(8,+(S.ipd+d*.1).toFixed(1)));
+      if(k==='speed')S.speed=Math.max(.5,Math.min(2,+(S.speed+d*.1).toFixed(1)));
+      if(k==='fov')S.fov=Math.max(70,Math.min(120,S.fov+d*2));
+      render();break;}
+    case 'setting':
+      if(v==='language'){
+        S.confirmText=S.lang==='zh'?'切换界面语言会重建页面。当前播放进度不受影响，但这是后果最重的一个设置项。':'Switching language rebuilds the page.';
+        S.overlay='confirm';render();
+      }else if(v==='reset'){
+        S.confirmText=t('resetAll');S.overlay='confirm';render();
+      }else if(v==='debug'){toast(S.lang==='zh'?'调试模式：显示网格与中心点':'Comfort tuning: grid and center markers');}
+      else openSelector(v);
+      break;
+    case 'choice':{
+      const c=S.selector;c.selected=+v;applyChoice(+v);break;}
+    case 'close-overlay': S.overlay=null;S.selector=null;render();break;
+    case 'confirm-ok':
+      if(S.confirmText===t('resetAll')){S.ipd=6.2;S.speed=1;S.fov=96;S.viewingMode=0;S.screenFlip=0;}
+      else {S.lang=S.lang==='zh'?'en':'zh';publish('SETTINGS');mark('lang');}
+      S.overlay=null;render();break;
+    case 'switch-video': switchVideo(+v);break;
+    case 'pin-ok':
+      S.paired=true;S.overlay=null;
+      toast(t('pinOk'));logEvent('pairchallenge paired=1 → saveServerCert() → 自动回到起流','');render();break;
+    case 'pin-cancel': S.overlay=null;S.screen='HOME';S.route=null;toast(t('pinFail'));render();break;
+    case 'issue':
+      toast(el.getAttribute('title'));logEvent('查看问题标注：'+esc(el.getAttribute('title')),'');break;
+  }
+}
+function semantic(v){
+  if(S.screen==='VRMENU'){vrSemantic(v);return;}
+  if(v==='LEFT'||v==='RIGHT'||v==='UP'||v==='DOWN'){
+    if(S.screen==='PLAYER'&&S.overlay==='playerPlaylist'){
+      const n=S.library.length;
+      if(v==='UP'||v==='DOWN')S.vrListFocus=(S.vrListFocus+(v==='DOWN'?1:-1)+n)%n;
+      render();return;
+    }
+    dispatch({type:'Navigate',dir:v},'Navigate('+v+')');
+  }else if(v==='CONFIRM')dispatch({type:'Confirm'},'Confirm');
+  else if(v==='BACK')dispatch({type:'Back'},'Back');
+}
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  e.preventDefault();e.stopPropagation();handle(el.dataset.act,el,e);
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='manualUrl')S.manualUrl=e.target.value;
+  if(e.target.id==='manualHost')S.manualHost=e.target.value;
+  if(e.target.id==='searchBox'){S.query=e.target.value;render();setTimeout(()=>{const b=$('#searchBox');if(b){b.focus();b.setSelectionRange(b.value.length,b.value.length);}},0);}
+});
+document.addEventListener('scroll',e=>{
+  const p=e.target.closest?e.target.closest('.page'):null;
+  if(p&&p.dataset.scroll)S.scroll[p.dataset.scroll]=p.scrollTop;
+},true);
+document.addEventListener('keydown',e=>{
+  if(e.target&&/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;
+  const map={ArrowLeft:'LEFT',ArrowRight:'RIGHT',ArrowUp:'UP',ArrowDown:'DOWN',
+    Enter:'CONFIRM',NumpadEnter:'CONFIRM',Escape:'BACK',Backspace:'BACK'};
+  const k=map[e.key]||map[e.code];if(!k)return;
+  e.preventDefault();semantic(k);
+});
+/* 自适应缩放设备框 */
+function fit(){
+  const stage=$('#stageInner');
+  const scale=Math.min(1,Math.max(.5,(stage.clientWidth-8)/960));
+  $('#device').style.transform='scale('+scale+')';
+  stage.style.height=(540*scale)+'px';
+}
+window.addEventListener('resize',fit);
+/* 启动：支持锚点直达某个视图，便于对照验证
+   #legacy = 头显现状 2D 叠层 / #target = H4 双眼目标 / #vrmode = VR 菜单态 / #connect / #settings / #player / #pin */
+const hash=((typeof location!=='undefined'&&location.hash)||'').replace('#','').toLowerCase();
+if(hash==='legacy'||hash==='target')S.vrMode=hash;
+if(hash==='vrmode'){S.screen='VRMENU';S.vrMode='target';}
+if(hash==='vrmode-flat'){S.screen='VRMENU';S.vrMode='off';}
+if(hash==='connect'||hash==='settings')S.tab=hash==='connect'?'CONNECT':'SETTINGS';
+publish('CONNECT');S.items=currentItems();S.status='';
+logEvent('原型启动：LAUNCHER = HomeActivity','');
+if(hash==='connect')startScan();
+render();fit();
+if(hash==='player')launch({kind:'Video',id:1,name:'星际穿越 · IMAX 180° 全景'});
+if(hash==='pin')launch({kind:'Stream',ip:'192.168.31.254',name:'Kafka'});
+if(hash==='vrmode-play'){S.screen='VRMENU';S.vrMode='target';vrSelect(1);}
+</script>
+</body>
+</html>

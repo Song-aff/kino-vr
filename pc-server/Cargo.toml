@@ -1,0 +1,20 @@
+[package]
+name = "vr-player-server"
+version = "0.3.0"
+edition = "2021"
+description = "LAN VR video source server, UDP discovery and Sunshine L2 pairing proxy"
+
+[[bin]]
+name = "vr-player-server"
+path = "src/main.rs"
+
+# 零第三方依赖：只用 Rust 标准库，确保在 windows-gnu (MinGW) 工具链上可编译，
+# 不引入 webview2-com / windows-rs 等需要 MSVC 的 COM 绑定。
+[dependencies]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

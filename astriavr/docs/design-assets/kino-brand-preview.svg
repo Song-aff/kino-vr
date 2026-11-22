@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="420" viewBox="0 0 900 420">
+  <rect width="900" height="420" fill="#08090b"/>
+  <defs>
+    <clipPath id="roundA"><circle cx="120" cy="190" r="86"/></clipPath>
+    <clipPath id="roundB"><circle cx="340" cy="190" r="86"/></clipPath>
+  </defs>
+  <text x="48" y="56" fill="#f5f6f8" font-family="Microsoft YaHei, Segoe UI, sans-serif" font-size="22" font-weight="700" letter-spacing="2">KINO VR</text>
+  <text x="48" y="80" fill="#8e929a" font-family="Microsoft YaHei, Segoe UI, sans-serif" font-size="12">黑橙拼色 · 品牌资产预览 / theme preview</text>
+  <line x1="48" y1="98" x2="852" y2="98" stroke="#33363b" stroke-width="1"/>
+
+  <g clip-path="url(#roundA)">
+    <g transform="translate(34,104) scale(1.5926)">
+      <path d="M0 0H54V108H0Z" fill="#191b1f"/>
+      <path d="M54 0H108V108H54Z" fill="#ff7a18"/>
+      <path d="M31,36 H40 A9,9 0 0 1 49,45 V63 A9,9 0 0 1 40,72 H31 A9,9 0 0 1 22,63 V45 A9,9 0 0 1 31,36 Z" fill="#f5f6f8"/>
+      <path d="M68,36 H77 A9,9 0 0 1 86,45 V63 A9,9 0 0 1 77,72 H68 A9,9 0 0 1 59,63 V45 A9,9 0 0 1 68,36 Z" fill="#111214"/>
+    </g>
+  </g>
+  <circle cx="120" cy="190" r="86" fill="none" stroke="#33363b" stroke-width="1"/>
+  <text x="48" y="302" fill="#f5f6f8" font-family="Microsoft YaHei, Segoe UI, sans-serif" font-size="13" font-weight="700">自适应图标</text>
+  <text x="48" y="322" fill="#8e929a" font-family="Microsoft YaHei, Segoe UI, sans-serif" font-size="11">左右对半拼色 + 双目视口</text>
+  <text x="48" y="340" fill="#8e929a" font-family="Microsoft YaHei, Segoe UI, sans-serif" font-size="11">圆形遮罩，分界线过圆心</text>
+
+  <g clip-path="url(#roundB)">
+    <rect x="254" y="104" width="172" height="172" fill="#191b1f"/>
+    <g transform="translate(254,104) scale(1.5926)">
+      <path d="M31,36 H40 A9,9 0 0 1 49,45 V63 A9,9 0 0 1 40,72 H31 A9,9 0 0 1 22,63 V45 A9,9 0 0 1 31,36 Z" fill="#f5f6f8"/>
+      <path d="M68,36 H77 A9,9 0 0 1 86,45 V63 A9,9 0 0 1 77,72 H68 A9,9 0 0 1 59,63 V45 A9,9 0 0 1 68,36 Z" fill="#f5f6f8"/>
+    </g>
+  </g>
+  <circle cx="340" cy="190" r="86" fill="none" stroke="#33363b" stroke-width="1"/>
+  <text x="268" y="302" fill="#f5f6f8" font-family="Microsoft YaHei, Segoe UI, sans-serif" font-size="13" font-weight="700">单色图标</text>
+  <text x="268" y="322" fill="#8e929a" font-family="Microsoft YaHei, Segoe UI, sans-serif" font-size="11">Android 13 主题图标</text>
+  <text x="268" y="340" fill="#8e929a" font-family="Microsoft YaHei, Segoe UI, sans-serif" font-size="11">透明底时只保留白色形状</text>
+
+  <path d="M528,160 H642 A8,8 0 0 1 650,168 V206 A8,8 0 0 1 642,214 H528 A8,8 0 0 1 520,206 V168 A8,8 0 0 1 528,160 Z" fill="#191b1f" stroke="#3a3d42" stroke-width="1"/>
+  <path d="M650,160 H728 A8,8 0 0 1 736,168 V206 A8,8 0 0 1 728,214 H650 Z" fill="#ff7a18"/>
+  <text x="585" y="195" fill="#f5f6f8" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="700" letter-spacing="2" text-anchor="middle">KINO</text>
+  <text x="693" y="195" fill="#111214" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="700" letter-spacing="2" text-anchor="middle">VR</text>
+  <text x="488" y="302" fill="#f5f6f8" font-family="Microsoft YaHei, Segoe UI, sans-serif" font-size="13" font-weight="700">文字标</text>
+  <text x="488" y="322" fill="#8e929a" font-family="Microsoft YaHei, Segoe UI, sans-serif" font-size="11">两段硬切、无渐变无阴影</text>
+  <text x="488" y="340" fill="#8e929a" font-family="Microsoft YaHei, Segoe UI, sans-serif" font-size="11">顶栏 / 启动器 / PC 管理页</text>
+
+  <rect x="48" y="366" width="18" height="18" rx="3" fill="#0b0c0e" stroke="#33363b"/>
+  <text x="74" y="380" fill="#8e929a" font-family="Consolas, monospace" font-size="11">0B0C0E 底</text>
+  <rect x="186" y="366" width="18" height="18" rx="3" fill="#191b1f" stroke="#33363b"/>
+  <text x="212" y="380" fill="#8e929a" font-family="Consolas, monospace" font-size="11">191B1F 卡片</text>
+  <rect x="336" y="366" width="18" height="18" rx="3" fill="#ff7a18"/>
+  <text x="362" y="380" fill="#8e929a" font-family="Consolas, monospace" font-size="11">FF7A18 强调</text>
+  <rect x="484" y="366" width="18" height="18" rx="3" fill="#ff4d4f"/>
+  <text x="510" y="380" fill="#8e929a" font-family="Consolas, monospace" font-size="11">FF4D4F 危险</text>
+  <text x="48" y="404" fill="#6f737a" font-family="Microsoft YaHei, Segoe UI, sans-serif" font-size="11">界面内橙色仅用于焦点态、主操作、品牌块与进度指示（约 8~12% 面积）；背景与卡片保持中性黑。图标本身不受面积约束。</text>
+</svg>

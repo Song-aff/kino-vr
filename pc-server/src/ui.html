@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VR 片源服务 · 管理</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#1c2430;--muted:#6b7684;--line:#e3e7ed;--blue:#2563eb;--blue-bg:#eef4ff;--green:#0f7a55;--green-bg:#e7f6ef;--red:#b42318;--mono:ui-monospace,Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;padding:28px 20px 60px;background:var(--bg);color:var(--ink);font:14px/1.65 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+.wrap{max-width:860px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+h1{font-size:21px;margin:0;font-weight:650;letter-spacing:-.3px}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.badge{display:inline-flex;align-items:center;gap:7px;background:var(--green-bg);color:var(--green);font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+h2{font-size:14px;margin:0 0 12px;font-weight:650}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.url{font-family:var(--mono);font-size:16px;background:var(--blue-bg);color:var(--blue);padding:12px 14px;border-radius:8px;word-break:break-all;border:1px solid #d8e5ff}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input[type=text],input[type=password]{flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;color:var(--ink);background:#fff;outline:none}
+input[type=text]:focus,input[type=password]:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+select{border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;color:var(--ink);background:#fff;outline:none;min-width:210px}
+select:focus{border-color:var(--blue)}
+button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:9px 15px;font-size:13px;font-family:inherit;cursor:pointer;transition:.15s}
+button:hover{border-color:var(--blue);color:var(--blue)}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+button.primary:hover{background:#1d4ed8;color:#fff}
+button.danger:hover{border-color:var(--red);color:var(--red)}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px}
+.meta div{font-size:12px;color:var(--muted)}
+.meta b{display:block;font-size:14px;color:var(--ink);font-weight:600;margin-top:3px;font-family:var(--mono)}
+.browser{border:1px solid var(--line);border-radius:8px;margin-top:12px;max-height:190px;overflow:auto;background:#fbfcfd}
+.browser div{padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f2f5;display:flex;gap:8px;align-items:center}
+.browser div:last-child{border-bottom:none}
+.browser div:hover{background:var(--blue-bg);color:var(--blue)}
+.browser .up{color:var(--muted)}
+.cur{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:10px;word-break:break-all}
+.files{max-height:200px;overflow:auto;margin-top:10px}
+.files div{font-family:var(--mono);font-size:12.5px;padding:5px 0;border-bottom:1px solid #f2f4f7;word-break:break-all}
+.empty{color:var(--muted);font-size:13px}
+.tip{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;font-size:13px;color:#78500a;margin-bottom:14px}
+.tip b{color:#78500a}
+.fw{display:flex;align-items:center;gap:12px;justify-content:space-between;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;border:1px solid var(--line);background:var(--card)}
+.fw.ok{background:var(--green-bg);border-color:#bfe8d3;color:var(--green)}
+.fw.warn{background:#fffbeb;border-color:#fde68a;color:#78500a}
+.fw span{flex:1}
+.fw button{white-space:nowrap}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1c2430;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:.25s}
+.toast.show{opacity:1}
+.ss{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px}
+.ssItem{background:#fbfcfd;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted)}
+.ssItem b{display:block;font-size:14px;margin-top:4px;font-weight:600}
+.ssItem b.ok{color:var(--green)}
+.ssItem b.bad{color:var(--red)}
+.sshint{margin-top:12px;font-size:13px;color:var(--ink);background:var(--blue-bg);border:1px solid #d8e5ff;border-radius:8px;padding:10px 12px}
+button:disabled{opacity:.45;cursor:not-allowed}
+footer{margin-top:26px;color:var(--muted);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>VR 片源服务</h1><div class="sub">局域网片源 · HTTP Range · 自动发现</div></div>
+  <div class="badge"><span class="dot"></span><span id="stateText">运行中</span></div>
+</header>
+
+<div class="fw" id="fwBar"><span id="fwText">正在检查防火墙…</span><button id="fwBtn" onclick="fixFirewall()">一键修复防火墙</button></div>
+
+<div class="card">
+  <h2>串流（Sunshine / Moonlight）</h2>
+  <div class="ss">
+    <div class="ssItem">服务端<b id="ssInstall" class="bad">检查中…</b></div>
+    <div class="ssItem">运行状态<b id="ssRun" class="bad">检查中…</b></div>
+    <div class="ssItem">串流会话<b id="ssSession" class="bad">检查中…</b></div>
+    <div class="ssItem">串流端口<b id="ssPorts" class="bad">检查中…</b></div>
+    <div class="ssItem">输入后端<b id="ssInput" class="bad">检查中…</b></div>
+    <div class="ssItem">Web UI 凭据<b id="ssCreds" class="bad">检查中…</b></div>
+    <div class="ssItem">本机音频<b id="ssMute" class="bad">检查中…</b></div>
+  </div>
+  <div class="sshint" id="ssHint">正在检测 Sunshine…</div>
+  <div class="sub" id="ssInputHint" style="margin-top:8px"></div>
+  <div class="row" style="margin-top:12px">
+    <button class="primary" id="ssOpen" onclick="openSunshine()">打开 Sunshine 管理页</button>
+    <button onclick="guide('sunshine')">下载 Sunshine</button>
+    <button onclick="guide('input')">查看输入驱动状态</button>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <input type="text" id="pairPin" maxlength="4" inputmode="numeric" placeholder="APP 显示的 4 位配对码" style="flex:0 0 210px;min-width:160px">
+    <button class="primary" id="pairBtn" onclick="submitPin()">提交配对码</button>
+    <span class="sub" id="pairResult" style="margin:0">首次配对时把 APP 上的 4 位码填在这里</span>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <input type="text" id="ssUser" placeholder="Sunshine Web UI 用户名" autocomplete="off" style="flex:0 0 190px;min-width:140px">
+    <input type="password" id="ssPass" placeholder="Web UI 密码" autocomplete="new-password" style="flex:0 0 190px;min-width:140px">
+    <button onclick="saveCreds()">保存凭据</button>
+    <button class="danger" onclick="clearCreds()">清除</button>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <label style="margin:0"><input type="checkbox" id="autoMute" onchange="saveAutoMute()"> 串流时自动静音本机</label>
+    <button onclick="restoreVolume()">恢复音量</button>
+  </div>
+  <div class="sub" style="margin-top:10px">端口放行由本程序以管理员身份运行时自动完成。APP 首次连接会显示 4 位配对码，填在上方点「提交配对码」即可，无需再开 Sunshine 的 PIN 页；代发由系统自带 curl 完成，凭据仅存本机 <b>%APPDATA%\VRPlayerServer\sunshine-creds.txt</b>，永不写日志、永不回传页面，可随时「清除」，程序<b>不会修改你已装 Sunshine 的密码</b>。若提示被 CSRF 拦截，按提示在 sunshine.conf 的 csrf_allowed_origins 放行 <b>http://127.0.0.1:8787</b> 后重启 Sunshine。本程序不自动下载或安装第三方软件与内核驱动。Sunshine 只有装了虚拟音频设备才能自己静音主机，所以这里由 PC 管理端在串流开始/结束时接管系统主音量；异常退出后下次启动会自动恢复。</div>
+</div>
+
+<div class="tip"><b>手机端不用手填地址：</b>打开 APK → 「添加网络地址」→ 自动发现本机这台<b>设备</b>，点一下连接，片源就会进入手机播放列表。下方 URL 仅作备用（手动输入或排查用）。</div>
+
+<div class="card">
+  <h2>连接地址</h2>
+  <div class="url" id="url">读取中…</div>
+  <div class="row" style="margin-top:10px"><button onclick="copyUrl()">复制地址</button><button onclick="openUrl()">在浏览器打开</button></div>
+  <div class="meta">
+    <div>本机 IP<b id="ip">—</b></div>
+    <div>片源端口<b id="port">—</b></div>
+    <div>发现端口 (UDP)<b id="dport">—</b></div>
+    <div>片源文件数<b id="count">—</b></div>
+  </div>
+  <div class="row" style="margin-top:14px">
+    <label style="margin:0">广播 IP（装了 VPN / 多网卡时手动指定）</label>
+    <select id="ipSelect" onchange="saveIp()"></select>
+  </div>
+</div>
+
+<div class="card">
+  <h2>片源目录</h2>
+  <div class="row">
+    <input type="text" id="rootInput" placeholder="输入绝对路径，例如 D:\Movies">
+    <button class="primary" onclick="setRoot(document.getElementById('rootInput').value)">应用此目录</button>
+  </div>
+  <div class="browser" id="browser"></div>
+  <div class="cur" id="browseCur"></div>
+  <div class="row" style="margin-top:10px">
+    <button class="primary" onclick="setRoot(browsePath)">把当前浏览目录设为片源目录</button>
+    <button onclick="browse(parentPath)">上级目录</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>设备名称（手机端「附近的设备」里显示）</h2>
+  <div class="row">
+    <input type="text" id="nameInput" maxlength="48">
+    <button class="primary" onclick="saveName()">保存</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>当前片源文件（含子目录，手机端连接后展示的就是这份列表）</h2>
+  <div class="files" id="files"></div>
+</div>
+
+<div class="card">
+  <h2>服务控制</h2>
+  <div class="row"><button class="danger" onclick="quit()">停止服务</button><button onclick="refresh()">刷新状态</button></div>
+  <div class="sub" style="margin-top:10px">停止后重新双击 exe 即可再次启动；再次双击时若服务已在运行，会直接打开本管理页。</div>
+</div>
+
+<footer>VR Player Server v0.5 · L2 能力代理 · 仅监听局域网，无外网请求、无统计、无账号</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let browsePath = '', parentPath = '', currentUrl = '';
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1900); }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+async function refresh(){
+  try{
+    const s = await (await fetch('/api/status')).json();
+    currentUrl = s.url;
+    document.getElementById('url').textContent = s.url;
+    document.getElementById('ip').textContent = s.ip;
+    document.getElementById('port').textContent = s.mediaPort;
+    document.getElementById('dport').textContent = s.discoveryPort;
+    document.getElementById('count').textContent = s.fileCount;
+    document.getElementById('rootInput').value = s.root;
+    if(document.activeElement !== document.getElementById('nameInput')) document.getElementById('nameInput').value = s.name;
+    const sel = document.getElementById('ipSelect');
+    const sig = JSON.stringify(s.candidates);
+    if(sel.dataset.sig !== sig){
+      let opts = '<option value="">自动（'+esc(s.candidates[0]||s.ip)+'）</option>';
+      opts += s.candidates.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+      sel.innerHTML = opts; sel.dataset.sig = sig;
+    }
+    if(document.activeElement !== sel) sel.value = s.manualIp || '';
+    const box = document.getElementById('files');
+    box.innerHTML = s.files.length ? s.files.map(f=>'<div>'+esc(f)+'</div>').join('') : '<div class="empty">该目录下没有视频文件（mp4 / mkv / webm / mov / ts / avi / mp3）</div>';
+    const fw = s.firewall || {applied:false,detail:'防火墙状态未知'};
+    const bar = document.getElementById('fwBar');
+    bar.className = 'fw ' + (fw.applied ? 'ok' : 'warn');
+    document.getElementById('fwText').textContent = fw.detail;
+    document.getElementById('fwBtn').style.display = fw.applied ? 'none' : '';
+    const ss = s.sunshine || {};
+    setSs('ssInstall', ss.installed ? '已安装' : '未安装', ss.installed);
+    setSs('ssRun', ss.running ? '运行中' : '未运行', ss.running);
+    setSs('ssPorts', ss.portsOpen ? '已放行' : '未放行', ss.portsOpen);
+    setSs('ssCreds', ss.credsSet ? '已保存' : '未录入', !!ss.credsSet);
+    const sessionText = {idle:'空闲',streaming:'串流中',unreachable:'探测失败',unknown:'检测中'}[ss.session] || '未知';
+    setSs('ssSession', sessionText, ss.session!=='unreachable');
+    const backendText = {virtualhid:'Virtual HID',vigembus:'ViGEmBus',missing:'未安装',unknown:'未知'}[ss.inputBackend] || '未知';
+    setSs('ssInput', backendText, ss.inputBackend==='vigembus');
+    document.getElementById('ssHint').textContent = ss.hint || '串流状态未知';
+    const ver = (ss.version && ss.version!=='unknown') ? '版本 '+ss.version+' · ' : '';
+    document.getElementById('ssInputHint').textContent = ver + (ss.inputHint || '');
+    document.getElementById('ssOpen').disabled = !ss.running;
+    if(ss.pairResult && typeof ss.pairResult.ok === 'boolean') showPair(ss.pairResult);
+    const muteBox = document.getElementById('autoMute');
+    if(document.activeElement !== muteBox) muteBox.checked = !!s.autoMute;
+    setSs('ssMute', s.mutedByUs ? '串流中已静音' : '正常', true);
+    if(!browsePath) browse(s.root);
+  }catch(e){ document.getElementById('stateText').textContent='连接中断'; toast('无法读取服务状态'); }
+}
+
+async function browse(path){
+  const q = path ? '?path='+encodeURIComponent(path) : '';
+  const b = await (await fetch('/api/browse'+q)).json();
+  browsePath = b.current; parentPath = b.parent;
+  document.getElementById('browseCur').textContent = '正在浏览：' + b.current;
+  const box = document.getElementById('browser');
+  let html = '<div class="up" onclick="browse(parentPath)">↑ 上级目录</div>';
+  html += b.dirs.length ? b.dirs.map(d=>'<div data-p="'+esc(d.path)+'" onclick="browse(this.dataset.p)">📁 '+esc(d.name)+'</div>').join('') : '<div class="empty" style="padding:10px">没有子目录</div>';
+  box.innerHTML = html;
+}
+
+async function setRoot(path){
+  if(!path || !path.trim()){ toast('请填写目录路径'); return; }
+  const body = new URLSearchParams({root:path.trim()});
+  const r = await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+  if(r.ok){ toast('片源目录已更新'); browse(path.trim()); refresh(); }
+  else { const e = await r.json(); toast(e.error||'保存失败'); }
+}
+
+async function saveName(){
+  const name = document.getElementById('nameInput').value.trim();
+  if(!name){ toast('名称不能为空'); return; }
+  await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({name})});
+  toast('名称已保存'); refresh();
+}
+
+async function saveIp(){
+  const ip = document.getElementById('ipSelect').value;
+  await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({ip})});
+  toast(ip ? '广播 IP 已设为 '+ip : '已恢复自动探测'); refresh();
+}
+
+async function fixFirewall(){
+  const btn = document.getElementById('fwBtn');
+  btn.disabled = true; btn.textContent = '等待管理员授权…';
+  toast('正在申请管理员权限，请在弹窗中点「是」');
+  try{
+    const r = await fetch('/api/fix-firewall',{method:'POST'});
+    const s = await r.json();
+    toast(s.firewall.detail);
+  }catch(e){ toast('修复失败，请右键以管理员身份运行本程序'); }
+  btn.disabled = false; btn.textContent = '一键修复防火墙';
+  refresh();
+}
+
+function setSs(id, text, ok){ const e=document.getElementById(id); e.textContent=text; e.className=ok?'ok':'bad'; }
+async function guide(target){
+  await fetch('/api/sunshine/guide',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({target})});
+  toast('已在浏览器打开说明页');
+}
+
+function showPair(r){
+  const e = document.getElementById('pairResult');
+  e.textContent = (r.ok ? '✓ ' : '✗ ') + r.message + (r.code ? '（HTTP '+r.code+'）' : '');
+  e.style.color = r.ok ? 'var(--green)' : 'var(--red)';
+}
+async function submitPin(){
+  const pin = document.getElementById('pairPin').value.trim();
+  if(!/^\d{4}$/.test(pin)){ toast('配对码是 APP 上显示的 4 位数字'); return; }
+  const btn = document.getElementById('pairBtn');
+  btn.disabled = true; btn.textContent = '提交中…';
+  try{
+    const r = await (await fetch('/api/sunshine/pair',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({pin})})).json();
+    showPair(r);
+    toast(r.ok ? '配对码已提交' : '配对未成功，见输入框右侧提示');
+    if(r.ok) document.getElementById('pairPin').value = '';
+  }catch(e){ toast('提交失败：'+e.message); }
+  btn.disabled = false; btn.textContent = '提交配对码';
+  refresh();
+}
+async function saveCreds(){
+  const user = document.getElementById('ssUser').value.trim();
+  const pass = document.getElementById('ssPass').value;
+  if(!user || !pass){ toast('请填写 Sunshine Web UI 的用户名和密码'); return; }
+  const r = await fetch('/api/sunshine/credentials',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({user,pass})});
+  if(r.ok){ document.getElementById('ssPass').value=''; toast('凭据已保存到本机，可随时清除'); }
+  else { const e = await r.json(); toast(e.error||'保存失败'); }
+  refresh();
+}
+async function clearCreds(){
+  await fetch('/api/sunshine/credentials/clear',{method:'POST'});
+  document.getElementById('ssPass').value='';
+  toast('已清除本机保存的凭据'); refresh();
+}
+async function openSunshine(){
+  const s = await (await fetch('/api/sunshine/open',{method:'POST'})).json();
+  if(!s.running) toast('Sunshine 未运行，请先启动它');
+  else toast('已打开 Sunshine 管理页（自签证书提示属正常）');
+}
+async function saveAutoMute(){
+  const on = document.getElementById('autoMute').checked;
+  await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({automute:on?'1':'0'})});
+  toast(on ? '已开启：串流开始时自动静音本机' : '已关闭自动静音，音量已恢复');
+  refresh();
+}
+async function restoreVolume(){
+  await fetch('/api/restore-volume',{method:'POST'});
+  toast('已恢复本机音量'); refresh();
+}
+function copyUrl(){ navigator.clipboard.writeText(currentUrl).then(()=>toast('已复制 '+currentUrl),()=>toast('复制失败，请手动选中')); }
+function openUrl(){ window.open(currentUrl,'_blank'); }
+async function quit(){ if(!confirm('确定停止片源服务？手机端将无法取片。')) return; await fetch('/api/quit',{method:'POST'}); toast('服务已停止，可关闭本页'); document.getElementById('stateText').textContent='已停止'; }
+
+refresh(); setInterval(refresh, 5000);
+</script>
+</body>
+</html>
